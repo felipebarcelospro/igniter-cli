@@ -1,0 +1,83 @@
+import { z } from "zod";
+import { igniter } from "@/igniter";
+import { {{pascalCase name}}FeatureProcedure } from "../procedures/{{kebabCase name}}.procedure";
+
+export const {{pascalCase name}}Controller = igniter.controller({
+  name: "{{kebabCase name}}",
+  path: "/{{kebabCase name}}",
+  actions: {
+    findMany: igniter.query({
+      method: "GET",
+      path: "/",
+      use: [{{pascalCase name}}FeatureProcedure()],
+      query: z.object({
+        page: z.number().optional(),
+        limit: z.number().optional(),
+        sortBy: z.string().optional(),
+        sortOrder: z.enum(['asc', 'desc']).optional(),
+        search: z.string().optional()
+      }),
+      handler: async ({ response, request, context }) => {
+        const result = await context.{{camelCase name}}.findMany(request.query);
+        return response.success(result);
+      }
+    }),
+
+    findOne: igniter.query({
+      method: "GET",
+      path: "/:id" as const,
+      use: [{{pascalCase name}}FeatureProcedure()],
+      handler: async ({ request, response, context }) => {
+        const result = await context.{{camelCase name}}.findOne(request.params);
+        return response.success(result);
+      }
+    }),
+
+    create: igniter.mutation({
+      method: "POST",
+      path: "/",
+      use: [{{pascalCase name}}FeatureProcedure()],
+      body: z.object({
+        {{#each fields}}
+        {{#unless isRelation}}
+        {{name}}: {{zodType}},
+        {{/unless}}
+        {{/each}}
+      }),
+      handler: async ({ request, response, context }) => {
+        const result = await context.{{camelCase name}}.create(request.body);
+        return response.success(result);
+      }
+    }),
+
+    update: igniter.mutation({
+      method: "PUT",
+      path: "/:id" as const,
+      use: [{{pascalCase name}}FeatureProcedure()],
+      body: z.object({
+        {{#each fields}}
+        {{#unless isRelation}}
+        {{name}}: {{zodType}}.optional(),
+        {{/unless}}
+        {{/each}}
+      }),
+      handler: async ({ request, response, context }) => {
+        const result = await context.{{camelCase name}}.update({
+          ...request.params,
+          ...request.body
+        });
+        return response.success(result);
+      }
+    }),
+
+    delete: igniter.mutation({
+      method: "DELETE",
+      path: "/:id" as const,
+      use: [{{pascalCase name}}FeatureProcedure()],
+      handler: async ({ request, response, context }) => {
+        await context.{{camelCase name}}.delete(request.params);
+        return response.success(null);
+      }
+    })
+  }
+});

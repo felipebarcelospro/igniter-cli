@@ -1,0 +1,71 @@
+
+/**
+ * Represents a {{pascalCase name}} entity.
+ */
+export interface {{pascalCase name}} {
+  {{#each fields}}
+  {{#if isRelation}}
+  {{#if isList}}
+  /** Array of IDs representing the related {{name}} entities */
+  {{name}}Ids: string[];
+  {{else}}
+  /** ID of the related {{name}} entity */
+  {{name}}Id: string;
+  {{/if}}
+  {{else}}
+  /** {{pascalCase name}}'s {{name}} property */
+  {{name}}{{#if isOptional}}?{{/if}}: {{lowerCase type}};
+  {{/if}}
+  {{/each}}
+}
+
+/**
+ * Data transfer object for creating a new {{pascalCase name}}.
+ */
+export interface Create{{pascalCase name}}DTO {
+  {{#each fields}}
+  {{#if isRelation}}
+  {{#if isList}}
+  /** Array of IDs for the {{name}} relationships to be created */
+  {{name}}Ids: string[];
+  {{else}}
+  /** ID for the {{name}} relationship to be created */
+  {{name}}Id: string;
+  {{/if}}
+  {{else}}
+  /** {{name}} value for the new {{pascalCase name}} */
+  {{name}}{{#if isOptional}}?{{/if}}: {{lowerCase type}};
+  {{/if}}
+  {{/each}}
+}
+
+/**
+ * Data transfer object for updating an existing {{pascalCase name}}.
+ */
+export interface Update{{pascalCase name}}DTO {
+  {{#each fields}}
+  {{#if isRelation}}
+  {{#if isList}}
+  /** Array of IDs for the {{name}} relationships to be updated */
+  {{name}}Ids?: string[];
+  {{else}}
+  /** ID for the {{name}} relationship to be updated */
+  {{name}}Id?: string;
+  {{/if}}
+  {{else}}
+  /** Updated {{name}} value */
+  {{name}}?: {{lowerCase type}};
+  {{/if}}
+  {{/each}}
+}
+
+/**
+ * Query parameters for fetching {{pascalCase name}} entities
+ */
+export interface {{pascalCase name}}QueryParams {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  search?: string;
+}

@@ -1,0 +1,76 @@
+import { randomUUID } from "crypto";
+import { igniter } from "@/igniter";
+import type { {{pascalCase name}}, Create{{pascalCase name}}DTO, Update{{pascalCase name}}DTO, {{pascalCase name}}QueryParams } from "../{{kebabCase name}}.interface";
+
+export const {{pascalCase name}}FeatureProcedure = igniter.procedure({
+  name: "{{pascalCase name}}FeatureProcedure",
+  handler: async (_, { context }) => {
+    return {
+      {{camelCase name}}: {
+        findMany: async (query: {{pascalCase name}}QueryParams): Promise<{{pascalCase name}}[]> => {
+          return context.providers.database.{{camelCase name}}.findMany({
+            where: query.search ? {
+              OR: [
+                {{#each fields}}
+                {{#unless isRelation}}
+                { {{name}}: { contains: query.search } },
+                {{/unless}}
+                {{/each}}
+              ]
+            } : undefined,
+            skip: query.page ? (query.page - 1) * (query.limit || 10) : undefined,
+            take: query.limit,
+            orderBy: query.sortBy ? {
+              [query.sortBy]: query.sortOrder || 'asc'
+            } : undefined
+          });
+        },
+
+        findOne: async (params: { id: string }): Promise<{{pascalCase name}} | null> => {
+          return context.providers.database.{{camelCase name}}.findUnique({
+            where: {
+              id: params.id
+            }
+          });
+        },
+
+        create: async (input: Create{{pascalCase name}}DTO): Promise<{{pascalCase name}}> => {
+          return context.providers.database.{{camelCase name}}.create({
+            data: {
+              id: randomUUID(),
+              {{#each fields}}
+              {{name}}: input.{{name}},
+              {{/each}}
+            }
+          });
+        },
+
+        update: async (params: { id: string } & Update{{pascalCase name}}DTO): Promise<{{pascalCase name}}> => {
+          const {{camelCase name}} = await context.providers.database.{{camelCase name}}.findUnique({
+            where: { id: params.id }
+          });
+
+          if (!{{camelCase name}}) throw new Error("{{pascalCase name}} not found");
+
+          return context.providers.database.{{camelCase name}}.update({
+            where: { id: params.id },
+            data: {
+              {{#each fields}}
+              {{name}}: params.{{name}},
+              {{/each}}
+              updatedAt: new Date()
+            }
+          });
+        },
+
+        delete: async (params: { id: string }): Promise<{ id: string }> => {
+          await context.providers.database.{{camelCase name}}.delete({
+            where: { id: params.id }
+          });
+
+          return { id: params.id };
+        }
+      }
+    };
+  },
+});

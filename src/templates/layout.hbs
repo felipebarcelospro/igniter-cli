@@ -1,0 +1,54 @@
+import localFont from "next/font/local";
+
+import { type Metadata } from "next";
+import { Toaster } from 'sonner'
+import { IgniterProvider } from '@igniter-js/core/client'
+
+import "./globals.css";
+
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
+});
+
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
+});
+
+export const metadata: Metadata = {
+  title: "Igniter Framework",
+  description: "A modern framework optimized for AI-powered development, featuring built-in best practices and type safety for rapid web applications",
+};
+
+/**
+ * Root layout component that wraps the entire application
+ * Business Rule: We need to await connection() to ensure proper request-time behavior in Next.js 15
+ * @param children - React components to be rendered inside the layout
+ */
+export default async function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body className="antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+          forcedTheme='light'
+        >
+          <IgniterProvider>
+            <Toaster position="top-center" />
+            {children}
+          </IgniterProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}

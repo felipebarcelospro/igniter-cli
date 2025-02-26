@@ -1,0 +1,313 @@
+import { Badge } from "@/core/design-system/badge"
+import { Button } from "@/core/design-system/button"
+import { Card, CardContent, CardFooter } from "@/core/design-system/card"
+import { ArrowRight, Code2, Github, SparkleIcon, Twitter, Youtube } from "lucide-react"
+import { FileText } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@radix-ui/react-tabs"
+
+export default async function Home() {
+  return (
+    <div className="min-h-screen flex flex-col pt-12 space-y-12">
+      <header className="max-w-2xl w-full space-y-8 mx-auto my-auto">
+        <div className="space-y-6 text-center">
+          <Badge variant="outline" className="mx-auto rounded-full px-3 py-1 text-sm font-medium bg-cyan-500/10 text-cyan-500 border-cyan-300/10/20" aria-label="Beta version">
+            BETA
+          </Badge>
+
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Welcome to <br />Igniter Framework
+          </h1>
+          <p className="text-base sm:text-lg text-muted-foreground max-w-md mx-auto leading-relaxed">
+            A modern framework optimized for AI-powered development, featuring built-in best practices and type safety for rapid web applications
+          </p>
+
+          <div className="flex items-center justify-center gap-4">
+            <Button variant="outline" size="icon" asChild>
+              <a href="https://github.com/feldbarcelospro/igniter-js" target="_blank" rel="noopener noreferrer">
+                <Github className="h-4 w-4" />
+                <span className="sr-only">GitHub Repository</span>
+              </a>
+            </Button>
+            <Button variant="outline" size="icon" asChild>
+              <a href="https://twitter.com/feldbarcelospro" target="_blank" rel="noopener noreferrer">
+                <Twitter className="h-4 w-4" />
+                <span className="sr-only">X (Twitter) Profile</span>
+              </a>
+            </Button>
+            <Button variant="outline" size="icon" asChild>
+              <a href="https://youtube.com/@feldbarcelospro" target="_blank" rel="noopener noreferrer">
+                <Youtube className="h-4 w-4" />
+                <span className="sr-only">YouTube Channel</span>
+              </a>
+            </Button>
+          </div>
+        </div>
+        <section aria-labelledby="getting-started-title" className="relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/10 pointer-events-none" aria-hidden="true" />
+          <Card className="rounded-3xl shadow-lg backdrop-blur-sm border bg-card/50 overflow-hidden">
+            <CardContent className="p-6 sm:p-8">
+              <Tabs defaultValue="getting-started" className="space-y-6 flex flex-col items-center">
+                <TabsList className="inline-flex h-12 items-center justify-center rounded-full bg-muted p-1 text-muted-foreground">
+                  <TabsTrigger 
+                    value="getting-started"
+                    className="inline-flex w-fit items-center justify-center whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                  >
+                    <Code2 className="mr-2 h-4 w-4" />
+                    Getting Started
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="first-feature"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    First Feature
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="extensions"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                  >
+                    <SparkleIcon className="mr-2 h-4 w-4" />
+                    Add your first Spark (Comming Soon)
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="getting-started" className="space-y-6 w-full">
+                  <div className="space-y-2 text-center flex flex-col items-center justify-center">
+                    <h2 className="text-2xl font-bold tracking-tight">Getting Started</h2>
+                    <p className="text-muted-foreground">Follow these steps to set up your development environment.</p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="group rounded-2xl border p-4 transition-colors hover:bg-accent">
+                      <p className="font-medium text-foreground mb-2">1. Install dependencies</p>
+                      <code className="relative rounded-xl bg-muted border px-4 py-3 font-mono text-sm block group-hover:border-accent transition-colors">
+                        npm install
+                      </code>
+                    </div>
+
+                    <div className="group rounded-2xl border p-4 transition-colors hover:bg-accent">
+                      <p className="font-medium text-foreground mb-2">2. Start development server</p>
+                      <code className="relative rounded-xl bg-muted border px-4 py-3 font-mono text-sm block group-hover:border-accent transition-colors">
+                        npm run dev
+                      </code>
+                    </div>
+
+                    <div className="group rounded-2xl border p-4 transition-colors hover:bg-accent">
+                      <p className="font-medium text-foreground mb-2">3. View your application</p>
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <code className="text-primary">http://localhost:3000</code>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="first-feature" className="space-y-6 w-full">
+                  <div className="space-y-2 text-center flex flex-col items-center justify-center">
+                    <h2 className="text-2xl font-bold tracking-tight">Create Your First Feature</h2>
+                    <p className="text-muted-foreground">Follow these steps to create and configure a new feature.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="group rounded-2xl border p-4 transition-colors hover:bg-accent">
+                      <p className="font-medium text-foreground mb-2">1. Add your entity on schema.prisma</p>
+                      <code className="relative rounded-xl bg-muted border px-4 py-3 font-mono text-sm block group-hover:border-accent transition-colors">
+                        {`// Example:
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}`}
+                      </code>
+                    </div>
+
+                    <div className="group rounded-2xl border p-4 transition-colors hover:bg-accent">
+                      <p className="font-medium text-foreground mb-2">2. Run CLI and select features to generate</p>
+                      <code className="relative rounded-xl bg-muted border px-4 py-3 font-mono text-sm block group-hover:border-accent transition-colors">
+                        igniter generate feature
+                      </code>
+                    </div>
+
+                    <div className="group rounded-2xl border p-4 transition-colors hover:bg-accent">
+                      <p className="font-medium text-foreground mb-2">4. Add to /src/igniter.router.ts</p>
+                      <code className="relative rounded-xl bg-muted border px-4 py-3 font-mono text-sm block group-hover:border-accent transition-colors">
+                        {`// Example:
+import { PostFeature } from '@/features/post'
+
+export const router = new IgniterRouter()
+  .use(postFeature.controller)
+`}
+                      </code>
+                    </div>
+
+                    <div className="group rounded-2xl border p-4 transition-colors hover:bg-accent">
+                      <p className="font-medium text-foreground mb-2">5. Use in your application</p>
+                      <p className="text-sm text-muted-foreground">
+                        {`// Server Component Example:
+import { PostFeature } from '@/features/post'
+
+export default async function Page() {
+  const getPosts = router.bind('post', 'get')
+  const posts = await getPosts()
+
+  return <pre>{JSON.stringify(posts, null, 2)}</pre>
+}
+
+// Client Component Example:
+'use client'
+
+import { PostFeature } from '@/features/post'
+import { useAction } from '@igniter/hooks'
+
+export default function Page() {
+  const { data, execute } = useAction({
+    action: router.bind('post', 'get')
+  })
+
+  return (
+    <>
+      <button onClick={execute}>Load Posts</button>
+      <pre>{JSON.stringify(data, null, 2)}</pre>
+    </>
+  )
+}
+`}
+                      </p >
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="extensions" className="space-y-6 w-full">
+                  <div className="space-y-2 text-center flex flex-col items-center justify-center">
+                    <h2 className="text-2xl font-bold tracking-tight">Ignite Sparks</h2>
+                    <p className="text-muted-foreground">Add powerful features that ignite your application.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="group rounded-2xl border p-4 transition-colors hover:bg-accent">
+                      <p className="font-medium text-foreground mb-2">1. Discover available Sparks</p>
+                      <code className="relative rounded-xl bg-muted border px-4 py-3 font-mono text-sm block group-hover:border-accent transition-colors">
+                        npm run igniter spark:list
+                      </code>
+                    </div>
+
+                    <div className="group rounded-2xl border p-4 transition-colors hover:bg-accent">
+                      <p className="font-medium text-foreground mb-2">2. Ignite a single Spark</p>
+                      <code className="relative rounded-xl bg-muted border px-4 py-3 font-mono text-sm block group-hover:border-accent transition-colors">
+                        npm run igniter spark:add auth
+                      </code>
+                    </div>
+
+                    <div className="group rounded-2xl border p-4 transition-colors hover:bg-accent">
+                      <p className="font-medium text-foreground mb-2">3. Ignite multiple Sparks</p>
+                      <code className="relative rounded-xl bg-muted border px-4 py-3 font-mono text-sm block group-hover:border-accent transition-colors">
+                        npm run igniter spark:add email storage payment
+                      </code>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+            <CardFooter className="flex flex-col items-center justify-center border-t pt-8">
+              <Button variant="outline" size="lg" className="w-full rounded-xl">
+                Read Docs
+                <ArrowRight className="w-4 h-4 ml-auto" aria-hidden="true" />
+              </Button>
+            </CardFooter>
+          </Card>
+        </section>
+
+        <section className="grid gap-4 sm:grid-cols-2" aria-label="Resources">
+          <article>
+            <Card className="rounded-2xl shadow-sm hover:shadow-md transition-shadow bg-card">
+              <CardContent className="p-4 sm:p-6 space-y-2">
+                <span className="h-10 w-10 rounded-lg border border-cyan-300/10 bg-cyan-500/10 flex items-center justify-center mb-4">
+                  <FileText className="w-5 h-5 text-cyan-500" aria-hidden="true" />
+                </span>
+                <div className="flex items-center gap-2">                  
+                  <h3 className="font-semibold">Documentation</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Learn more about Igniter Framework features and API.
+                </p>
+                <Button variant="outline" className="w-full !mt-8 rounded-xl">
+                  Read Docs
+                  <ArrowRight className="w-4 h-4 ml-auto" aria-hidden="true" />
+                </Button>
+              </CardContent>
+            </Card>
+          </article>
+
+          <article>
+            <Card className="rounded-2xl shadow-sm hover:shadow-md transition-shadow bg-card">
+              <CardContent className="p-4 sm:p-6 space-y-2">
+                <span className="h-10 w-10 rounded-lg border border-cyan-300/10 bg-cyan-500/10 flex items-center justify-center mb-4">
+                  <Code2 className="w-5 h-5 text-cyan-500" aria-hidden="true" />
+                </span>
+                <div className="flex items-center gap-2">                  
+                  <h3 className="font-semibold">Examples</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Discover and deploy example Igniter Framework projects.
+                </p>
+                <Button variant="outline" className="w-full !mt-8 rounded-xl">                
+                  View Examples
+                  <ArrowRight className="w-4 h-4 ml-auto" aria-hidden="true" />
+                </Button>
+              </CardContent>
+            </Card>
+          </article>
+        </section>
+      </header>
+
+      <footer className="border-t pt-6 text-center w-full text-sm text-muted-foreground h-16">
+        <nav aria-label="Footer Links">
+          <p>
+            Built with{" "}
+            <a
+              href="https://ui.shadcn.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium underline underline-offset-4 hover:text-primary transition-colors"
+              aria-label="Visit shadcn/ui website"
+            >
+              shadcn/ui
+            </a>
+            {", "}
+            <a
+              href="https://nextjs.org"
+              target="_blank"
+              rel="noopener noreferrer" 
+              className="font-medium underline underline-offset-4 hover:text-primary transition-colors"
+              aria-label="Visit Next.js website"
+            >
+              Next.js 15
+            </a>
+            {", "}
+            <a
+              href="https://www.prisma.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium underline underline-offset-4 hover:text-primary transition-colors"
+              aria-label="Visit Prisma website"
+            >
+              Prisma
+            </a>
+            {", and "}
+            <a
+              href="https://zod.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium underline underline-offset-4 hover:text-primary transition-colors"
+              aria-label="Visit Zod website"
+            >
+              Zod
+            </a>
+          </p>
+        </nav>
+      </footer>
+    </div>
+  )
+}

@@ -1,0 +1,73 @@
+{
+  "name": "@igniter-js/cli",
+  "version": "0.1.0",
+  "description": "Igniter CLI for projects using Igniter Framework",
+  "main": "dist/index.js",
+  "homepage": "https://felipebarcelospro.github.io/igniter",
+  "bin": {
+    "igniter": "dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/felipebarcelospro/igniter-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/felipebarcelospro/igniter-cli/issues"
+  },
+  "scripts": {
+    "build": "tsc && mkdir -p dist/templates && cp -r src/templates/* dist/templates",
+    "dev": "ts-node src/index.ts",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.{ts,hbs}\"",
+    "prepublishOnly": "bun run build",
+    "test": "echo \"No tests specified\" && exit 0",
+    "release": "npm publish --access public"
+  },
+  "keywords": [
+    "igniter",
+    "igniter-js",
+    "next.js",
+    "cli",
+    "generator",
+    "feature-first",
+    "typescript",
+    "scaffolding",
+    "boilerplate",
+    "code-generation"
+  ],
+  "author": "Felipe Barcelos <felipe.barcelos@nubler.io>",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "handlebars": "^4.7.8",
+    "inquirer": "^8.2.6",
+    "ora": "^5.4.1",
+    "reflect-metadata": "^0.2.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^8.2.10",
+    "@types/node": "^20.10.2",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.2"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
