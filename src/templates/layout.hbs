@@ -1,50 +1,43 @@
-import localFont from "next/font/local";
+import type { Metadata } from "next";
 
-import { type Metadata } from "next";
-import { Toaster } from 'sonner'
+import { Geist, Geist_Mono } from "next/font/google";
 import { IgniterProvider } from '@igniter-js/core/client'
+import { ThemeProvider } from "next-themes";
 
-import "./globals.css";
+import "./globals.css"
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
+const geistSans = Geist({
   variable: "--font-geist-sans",
-  weight: "100 900",
+  subsets: ["latin"],
 });
 
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
+const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  weight: "100 900",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Igniter Framework",
-  description: "A modern framework optimized for AI-powered development, featuring built-in best practices and type safety for rapid web applications",
+  title: "Igniter Boilerplate",
+  description: "A customizable boilerplate for Igniter applications",
 };
 
-/**
- * Root layout component that wraps the entire application
- * Business Rule: We need to await connection() to ensure proper request-time behavior in Next.js 15
- * @param children - React components to be rendered inside the layout
- */
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <body className="antialiased">
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
-          forcedTheme='light'
         >
           <IgniterProvider>
-            <Toaster position="top-center" />
             {children}
           </IgniterProvider>
         </ThemeProvider>
