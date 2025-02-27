@@ -1,6 +1,6 @@
 {
   "name": "@igniter-js/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Igniter CLI for projects using Igniter Framework",
   "main": "dist/index.js",
   "homepage": "https://felipebarcelospro.github.io/igniter",
