@@ -57,7 +57,9 @@ export const {{pascalCase name}}Controller = igniter.controller({
       body: z.object({
         {{#each fields}}
         {{#unless isRelation}}
-        {{name}}: {{zodType}}.optional(),
+        {{#if (ne name "id")}}
+        {{name}}: {{#if isOptional}}{{zodType}}{{else}}{{zodType}}.optional(){{/if}},
+        {{/if}}
         {{/unless}}
         {{/each}}
       }),
