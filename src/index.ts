@@ -124,8 +124,6 @@ class IgniterCLI extends CLIHelper {
         }))
       }
 
-      console.log(parsedFields)
-
       this.spinner.succeed()
 
       // Create feature directory
