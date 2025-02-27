@@ -32,6 +32,21 @@ export function registerHelpers() {
     return str.toLowerCase()
   })
 
+  Handlebars.registerHelper('getTypeFormat', (type: string, isRelation: boolean) => {
+    const primitiveTypes = ['string', 'number', 'boolean', 'date', 'datetime', 'any', 'bigint', 'undefined', 'null', 'never', 'unknown', 'void']
+    const formattedType = type.toLowerCase()
+
+    if (formattedType === 'datetime') {
+      return 'Date'      
+    }
+    
+    if (primitiveTypes.includes(formattedType) && !isRelation) {
+      return formattedType
+    }
+    
+    return type
+  })
+
   /**
    * Handlebars helper to compare if two values are equal
    * @param {string} firstValue - First value to compare
@@ -40,5 +55,16 @@ export function registerHelpers() {
    */
   Handlebars.registerHelper('equals', (firstValue: string, secondValue: string): boolean => {
     return firstValue === secondValue
+  })
+
+  /**
+   * Handlebars helper to concatenate two strings
+   */
+  Handlebars.registerHelper('concat', (str1: string, str2: string): string => {
+    return str1 + str2
+  })
+
+  Handlebars.registerHelper('ne', (a: any, b: any) => {
+    return a !== b
   })
 }

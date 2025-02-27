@@ -1,3 +1,8 @@
+{{#each fields}}
+{{#if relations}}
+import type { {{pascalCase type}} } from '../{{kebabCase type}}/{{kebabCase type}}.interface';
+{{/if}}
+{{/each}}
 
 /**
  * Represents a {{pascalCase name}} entity.
@@ -6,15 +11,17 @@ export interface {{pascalCase name}} {
   {{#each fields}}
   {{#if isRelation}}
   {{#if isList}}
-  /** Array of IDs representing the related {{name}} entities */
+  /** Array of IDs representing the related {{pascalCase type}} entities */
   {{name}}Ids: string[];
+  /** Related {{pascalCase type}} entities */
+  {{name}}: {{pascalCase type}}[];
   {{else}}
-  /** ID of the related {{name}} entity */
-  {{name}}Id: string;
+  /** Related {{pascalCase type}} entity */
+  {{name}}: {{pascalCase type}};
   {{/if}}
   {{else}}
   /** {{pascalCase name}}'s {{name}} property */
-  {{name}}{{#if isOptional}}?{{/if}}: {{lowerCase type}};
+  {{name}}: {{getTypeFormat type isRelation}}{{#if isOptional}}{{#unless hasDefault}}  | null{{/unless}}{{/if}};
   {{/if}}
   {{/each}}
 }
@@ -24,17 +31,16 @@ export interface {{pascalCase name}} {
  */
 export interface Create{{pascalCase name}}DTO {
   {{#each fields}}
-  {{#if isRelation}}
   {{#if isList}}
-  /** Array of IDs for the {{name}} relationships to be created */
-  {{name}}Ids: string[];
+  /** Array of IDs for the {{pascalCase type}} relationships to be created */
+  {{name}}Ids{{#if (equals relations.type 'one-to-many')}}?{{/if}}: string[];
   {{else}}
-  /** ID for the {{name}} relationship to be created */
-  {{name}}Id: string;
-  {{/if}}
-  {{else}}
-  /** {{name}} value for the new {{pascalCase name}} */
-  {{name}}{{#if isOptional}}?{{/if}}: {{lowerCase type}};
+  {{#unless (equals name (concat (lowerCase ../name) "Id"))}}
+  {{#unless isRelation}}
+  /** {{pascalCase name}}'s {{name}} property  */
+  {{name}}{{#if isOptional}}?{{/if}}: {{getTypeFormat type isRelation}}{{#if isOptional}} | null{{/if}};
+  {{/unless}}
+  {{/unless}}
   {{/if}}
   {{/each}}
 }
@@ -44,28 +50,32 @@ export interface Create{{pascalCase name}}DTO {
  */
 export interface Update{{pascalCase name}}DTO {
   {{#each fields}}
-  {{#if isRelation}}
   {{#if isList}}
-  /** Array of IDs for the {{name}} relationships to be updated */
+  /** Array of IDs for the {{pascalCase type}} relationships to be created */
   {{name}}Ids?: string[];
   {{else}}
-  /** ID for the {{name}} relationship to be updated */
-  {{name}}Id?: string;
-  {{/if}}
-  {{else}}
-  /** Updated {{name}} value */
-  {{name}}?: {{lowerCase type}};
+  {{#unless (equals name (concat (lowerCase ../name) "Id"))}}
+  {{#unless isRelation}}
+  /** {{pascalCase name}}'s {{name}} property  */
+  {{name}}?: {{getTypeFormat type isRelation}}{{#if isOptional}} | null{{/if}};
+  {{/unless}}
+  {{/unless}}
   {{/if}}
   {{/each}}
 }
 
 /**
- * Query parameters for fetching {{pascalCase name}} entities
+ * Query parameters for fetching Category entities
  */
-export interface {{pascalCase name}}QueryParams {
+export interface CategoryQueryParams {
+  /** Current page number for pagination */
   page?: number;
+  /** Number of items to return per page */
   limit?: number;
+  /** Property to sort by */
   sortBy?: string;
+  /** Sort order */
   sortOrder?: 'asc' | 'desc';
+  /** Search term for filtering */
   search?: string;
 }

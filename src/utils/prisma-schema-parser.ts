@@ -6,6 +6,7 @@ interface ParsedField {
   type: string
   zodType: string
   description: string
+  isRelation: boolean
   isOptional: boolean
   isList: boolean
   hasDefault: boolean
@@ -71,7 +72,15 @@ export class PrismaSchemaParser {
     }
 
     const fieldsContent = modelMatch[1].trim()
-    return this.parseFields(fieldsContent)
+    const fields = this.parseFields(fieldsContent)
+
+    // Transform parsed fields to include relationship info
+    return fields.map(field => ({
+      ...field,
+      isRelation: !!field.relations || this.schemaContent.includes(`model ${field.type} {`),
+      isList: field.isList || (field.relations?.type === 'one-to-many' || field.relations?.type === 'many-to-many'),
+      isOptional: field.hasDefault || field.isOptional
+    }))
   }
 
   /**
@@ -81,17 +90,18 @@ export class PrismaSchemaParser {
     this.loadSchema()
     const fieldLines = fieldsContent.split('\n')
     const fields: ParsedField[] = []
-
+    
     for (const line of fieldLines) {
       const trimmedLine = line.trim()
       if (!trimmedLine || trimmedLine.startsWith('@@')) continue
 
       const field = this.parseFieldLine(trimmedLine)
       if (field) {
+        console.log(field)
         fields.push(field)
       }
     }
-
+    
     return fields
   }
 
@@ -101,7 +111,7 @@ export class PrismaSchemaParser {
   private parseFieldLine(line: string): ParsedField | null {
     this.loadSchema()
     // Basic field pattern: name type modifiers
-    const fieldPattern = /^(\w+)\s+(\w+)(\?|\[\])?\s*(@\w+(?:\([^)]*\))?)*$/
+    const fieldPattern = /^(\w+)\s+(\w+)(?:\?|\[\])?\s*(@[^\n]+)?$/
     const match = line.match(fieldPattern)
 
     if (!match) return null
@@ -111,35 +121,47 @@ export class PrismaSchemaParser {
 
     const isOptional = line.includes('?')
     const isList = line.includes('[]')
-    const hasDefault = modifiers.includes('@default')
+    const hasDefault = line.includes('@default')
 
-    // Skip internal Prisma fields
-    if (['id', 'createdAt', 'updatedAt'].includes(name)) {
-      return null
+    // Check if type is a model (potential relation)
+    const isModelType = this.schemaContent.includes(`model ${type} {`)
+    
+    // Parse relations
+    let relations = undefined
+    let isRelation = false
+    
+    if (line.includes('@relation') || isModelType) {
+      const relationMatch = line.match(/@relation\([^)]*\)/)
+      
+      if (relationMatch) {
+        relations = this.parseRelation(relationMatch[0], isList)
+        isRelation = true
+      } else if (isModelType) {
+        // If it's a model type but doesn't have @relation, create a default relation
+        relations = {
+          type: isList ? 'one-to-many' : 'one-to-one',
+          model: type,
+          fields: [name + 'Id'],
+          references: ['id']
+        } as any
+        isRelation = true
+      }
     }
 
     // Verifica se é um enum
     const isEnum = this.schemaContent.includes(`enum ${type} {`)
 
-    // Parse relations
-    let relations = undefined
-    if (line.includes('@relation')) {
-      const relationMatch = line.match(/@relation\([^)]*\)/)
-      if (relationMatch) {
-        relations = this.parseRelation(relationMatch[0], isList)
-      }
-    }
-
     return {
       name,
       type,
-      zodType: this.getZodType(type, isOptional, isList),
+      zodType: this.getZodType(type, isOptional || hasDefault, isList),
       description: `${name} field`,
-      isOptional,
+      isOptional: isOptional || hasDefault,
       isList,
       hasDefault,
       isEnum,
-      relations
+      relations,
+      isRelation
     }
   }
 
@@ -147,24 +169,64 @@ export class PrismaSchemaParser {
    * Parses a relation decorator into a structured object
    */
   private parseRelation(relationString: string, isList: boolean): { type: 'one-to-one' | 'one-to-many' | 'many-to-many'; model: string; fields: string[]; references: string[] } | undefined {
-    const relationDetails = relationString.match(/@relation\(([^)]+)\)/)?.[1].split(',');
-    if (!relationDetails) return undefined;
+    try {
+      // Extract details from @relation(...) string
+      const relationDetails = relationString.match(/@relation\(([^)]+)\)/)?.[1].trim();
+      if (!relationDetails) return undefined;
 
-    const nameMatch = relationDetails.find(detail => detail.trim().startsWith('name:'));
-    const fieldsMatch = relationDetails.find(detail => detail.trim().startsWith('fields:'));
-    const referencesMatch = relationDetails.find(detail => detail.trim().startsWith('references:'));
-
-    if (nameMatch && fieldsMatch && referencesMatch) {
-      const model = nameMatch.split(':')[1].trim().replace(/['"]/g, '');
-      const fields = fieldsMatch.split(':')[1].trim().replace(/\[|\]/g, '').split(',').map(f => f.trim());
-      const references = referencesMatch.split(':')[1].trim().replace(/\[|\]/g, '').split(',').map(f => f.trim());
-
-      return {
-        type: fields.length > 1 || references.length > 1 ? 'many-to-many' : (isList ? 'one-to-many' : 'one-to-one'),
-        model,
-        fields,
-        references
-      };
+      // Extract fields and references from the relation
+      const fieldsMatch = relationDetails.match(/fields:\s*\[\s*([^\]]+)\s*\]/);
+      const referencesMatch = relationDetails.match(/references:\s*\[\s*([^\]]+)\s*\]/);
+      
+      if (fieldsMatch && referencesMatch) {
+        // Get fields and references
+        const fields = fieldsMatch[1].split(',').map(f => f.trim().replace(/['"]/g, ''));
+        const references = referencesMatch[1].split(',').map(r => r.trim().replace(/['"]/g, ''));
+        
+        // Try to find referenced model from the context
+        let model = '';
+        
+        // Check if there's an explicit model name attribute
+        const modelMatch = relationDetails.match(/name:\s*['"]?(\w+)['"]?/);
+        if (modelMatch) {
+          model = modelMatch[1];
+        } else {
+          // Infer model from schema by looking at field references
+          // This is a simplification - in a real implementation you might need to look at
+          // the other side of the relation in the schema
+          const referenceField = references[0].replace(/['"]/g, '');
+          if (referenceField === 'id') {
+            // Try to find "@relation(fields: [categoryId], references: [id])"
+            // Where categoryId indicates a Category model
+            const possibleModelField = fields[0];
+            if (possibleModelField && possibleModelField.toLowerCase().endsWith('id')) {
+              // Extract model name by removing the 'Id' suffix
+              model = possibleModelField.substring(0, possibleModelField.length - 2);
+              // Convert first letter to uppercase for proper model name format
+              model = model.charAt(0).toUpperCase() + model.slice(1);
+            }
+          }
+        }
+        
+        // Determine relation type based on list status and fields/references count
+        let relationType: 'one-to-one' | 'one-to-many' | 'many-to-many';
+        if (fields.length > 1 || references.length > 1) {
+          relationType = 'many-to-many';
+        } else if (isList) {
+          relationType = 'one-to-many';
+        } else {
+          relationType = 'one-to-one';
+        }
+        
+        return {
+          type: relationType,
+          model,
+          fields,
+          references
+        };
+      }
+    } catch (error) {
+      console.log(`Error parsing relation: ${error}`);
     }
 
     return undefined;
