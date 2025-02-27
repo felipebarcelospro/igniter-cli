@@ -7,20 +7,25 @@ export const PROJECT_STRUCTURE = {
   'src/core/design-system': [],
   'src/core/utils': [],
   'src/core/providers': [],
+  'src/app/api/[[...all]]': [],
   'src/features': ['.gitkeep'],
 }
 
-export const LIA_FILES = {
-  'project_requirement.md': '',
-  'detailed_app_flow.md': '',
-  'tech_stack_and_packages.md': '',
-  'file_structure.md': '',
-  'schema_design.md': ''
-}
+
 
 export const DEPENDENCIES = {
   required: ['docker', 'node', 'npm'],
 }
+
+export const LIA_FILES = [
+  { name: '.github/copilot.feature.instructions.md', template: 'copilot.feature.instructions.hbs' },
+  { name: '.github/copilot.igniter.instructions.md', template: 'copilot.igniter.instructions.hbs' },
+  { name: '.github/copilot.instructions.md', template: 'copilot.instructions.hbs' },
+  { name: '.github/copilot.next.instructions.md', template: 'copilot.next.instructions.hbs' },
+  { name: '.github/copilot.review.instructions.md', template: 'copilot.review.instructions.hbs' },
+  { name: '.github/copilot.test.instructions.md', template: 'copilot.test.instructions.hbs' },
+  { name: '.vscode/settings.json', template: 'vscode.settings.hbs' }
+]
 
 export const CONFIG_FILES = [
   { name: 'README.md', template: 'readme' },

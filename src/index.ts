@@ -124,6 +124,8 @@ class IgniterCLI extends CLIHelper {
         }))
       }
 
+      console.log(parsedFields)
+
       this.spinner.succeed()
 
       // Create feature directory
@@ -322,7 +324,7 @@ class IgniterCLI extends CLIHelper {
     await this.delay(1000)
     this.spinner.start('Setting up Shadcn/UI...')
     this.execCommand('npm config set legacy-peer-deps true')
-    this.execCommand('npx shadcn@canary init -y')
+    this.execCommand('npx shadcn@canary init -d -y')
     const content = TemplateHandler.render('components.json', {})
     this.updateFile('components.json', content)
     this.execCommand('npx shadcn@canary add --all')
@@ -359,17 +361,29 @@ class IgniterCLI extends CLIHelper {
       const content = TemplateHandler.render(config.template, {})
       this.createFile(config.name, content)
     }
+    this.spinner.succeed('Package configuration updated successfully')
+
+    // Lia files
+    await this.delay(1000)
+    this.spinner.start('Creating Lia files...')
+    for (const file of LIA_FILES) {
+      const content = TemplateHandler.render(file.template, {})
+      this.createFile(file.name, content)
+    }
+    this.spinner.succeed('Lia files created successfully')
 
     this.spinner.start('Creating igniter files...')
 
     const igniterClientFile = TemplateHandler.render('igniter.client', {})
     const igniterContextFile = TemplateHandler.render('igniter.context', {})
     const igniterRouterFile = TemplateHandler.render('igniter.router', {})    
+    const igniterRouteHandlerFile = TemplateHandler.render('route', {})    
     const igniterFile = TemplateHandler.render('igniter', {})
 
     this.createFile('src/igniter.client.ts', igniterClientFile)
     this.createFile('src/igniter.context.ts', igniterContextFile)
     this.createFile('src/igniter.router.ts', igniterRouterFile)
+    this.createFile('src/app/api/[[...all]]/route.ts', igniterRouteHandlerFile)
     this.createFile('src/igniter.ts', igniterFile)
     
     this.spinner.succeed('Igniter files created successfully')
