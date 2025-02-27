@@ -1,0 +1,50 @@
+{
+  // Git Settings
+  "git.ignoreLimitWarning": true,
+
+  // Chat General Settings
+  "chat.promptFiles": true,
+
+  // GitHub Copilot Chat Settings
+  "github.copilot.chat.edits.codesearch.enabled": true, // Enable code search in chat edits
+  "github.copilot.chat.edits.suggestRelatedFilesFromGitHistory": true, // Suggest related files from git history
+  "github.copilot.chat.edits.temporalContext.enabled": true, // Enable temporal context in chat edits
+
+  // GitHub Copilot Instructions Configuration
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "file": "/.github/copilot.instructions.md" // General instructions
+    },
+    {
+      "file": "/.github/copilot.feature.instructions.md" // Feature-specific instructions
+    },   
+    {
+      "file": "/.github/copilot.igniter.instructions.md" // Igniter.js specific instructions
+    },    
+    {
+      "file": "/.github/copilot.next.instructions.md" // Next.js specific instructions
+    }
+  ],
+
+  // Test Generation Instructions
+  "github.copilot.chat.testGeneration.instructions": [
+    {
+      "file": "/.github/copilot.test.instructions.md" // Test-specific instructions
+    }
+  ],
+
+  // Code Review Instructions
+  "github.copilot.chat.reviewSelection.instructions": [
+    {
+      "file": "/.github/copilot.review.instructions.md" // Review-specific instructions
+    }
+  ],
+
+  // Commit Message Configuration
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "Follow Conventional Commits format. For example, 'feat: add new feature'." // Commit message format instructions
+    }
+  ]
+}
