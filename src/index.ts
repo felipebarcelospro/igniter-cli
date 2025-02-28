@@ -390,13 +390,6 @@ class IgniterCLI extends CLIHelper {
     packageJson.version = '1.0.0'
     packageJson.legacyPeerDeps = true
 
-    packageJson.scripts['docker:up'] = 'docker-compose up -d'
-    packageJson.scripts['docker:down'] = 'docker-compose down'
-
-    packageJson.scripts['db:studio'] = 'npx prisma studio'
-    packageJson.scripts['db:migrate:dev'] = 'igniter database start && npx prisma migrate dev'
-    packageJson.scripts['db:generate'] = 'igniter database start && npx prisma generate'
-
     packageJson.scripts['igniter'] = 'npx @igniter-js/cli'
 
     this.saveJSON('package.json', packageJson)
@@ -409,13 +402,13 @@ class IgniterCLI extends CLIHelper {
      ${chalk.gray('$')} ${chalk.white('npm run dev')}
 
   ${chalk.cyan('2.')} Start Docker services:
-     ${chalk.gray('$')} ${chalk.white('npm run docker:up')}
+     ${chalk.gray('$')} ${chalk.white('docker compose up -d')}
 
-  ${chalk.cyan('3.')} Generate Prisma client:
-     ${chalk.gray('$')} ${chalk.white('npm run db:generate')}
+  ${chalk.cyan('3.')} Run Prisma migrations client:
+     ${chalk.gray('$')} ${chalk.white('npx prisma migrate dev')}
 
   ${chalk.cyan('4.')} Create your first feature:
-     ${chalk.gray('$')} ${chalk.white('npm run igniter:generate <name>')}
+     ${chalk.gray('$')} ${chalk.white('npx @igniter-js/cli generate feature')}
 
   ${chalk.cyan('📚')} Documentation: ${chalk.blue('https://github.com/felipebarcelospro/igniter-js')}
   ${chalk.cyan('💡')} Need help? ${chalk.blue('https://github.com/felipebarcelospro/igniter-js/issues')}

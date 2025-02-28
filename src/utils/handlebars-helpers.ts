@@ -2,7 +2,14 @@ import Handlebars from 'handlebars'
 
 export function registerHelpers() {
   Handlebars.registerHelper('camelCase', (str: string) => {
-    return str.replace(/[-_]([a-z])/g, (g: string) => g[1].toUpperCase())
+    if (!str) return ''
+    
+    const result = str
+      .toLowerCase()
+      .replace(/[-_\s]+(.)?/g, (_, c) => c ? c.toUpperCase() : '')
+      .trim()
+
+    return result
   })
 
   Handlebars.registerHelper('pascalCase', (str: string) => {
@@ -67,4 +74,12 @@ export function registerHelpers() {
   Handlebars.registerHelper('ne', (a: any, b: any) => {
     return a !== b
   })
+
+  Handlebars.registerHelper('or', (a: any, b: any) => {
+    return a || b
+  })
+
+  Handlebars.registerHelper('isString', (value: any) => {
+    return typeof value === 'string'
+  });
 }

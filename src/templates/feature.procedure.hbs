@@ -7,26 +7,28 @@ export const {{pascalCase name}}FeatureProcedure = igniter.procedure({
     return {
       {{camelCase name}}: {
         findMany: async (query: {{pascalCase name}}QueryParams): Promise<{{pascalCase name}}[]> => {
-          return context.providers.database.{{camelCase name}}.findMany({
+          return context.providers.database.{{lowerCase name }}.findMany({
             where: query.search ? {
               OR: [
                 {{#each fields}}
                 {{#unless isRelation}}
+                {{#unless (or (equals name 'id') (equals name 'createdAt') (equals name 'updatedAt'))}}
+                {{#if (equals type 'String')}}
                 { {{name}}: { contains: query.search } },
+                {{/if}}
+                {{/unless}}
                 {{/unless}}
                 {{/each}}
               ]
             } : undefined,
             skip: query.page ? (query.page - 1) * (query.limit || 10) : undefined,
             take: query.limit,
-            orderBy: query.sortBy ? {
-              [query.sortBy]: query.sortOrder || 'asc'
-            } : undefined
+            orderBy: query.sortBy ? {[query.sortBy]: query.sortOrder || 'asc'} : undefined
           });
         },
 
         findOne: async (params: { id: string }): Promise<{{pascalCase name}} | null> => {
-          return context.providers.database.{{camelCase name}}.findUnique({
+          return context.providers.database.{{camelCase name }}.findUnique({
             where: {
               id: params.id
             }
@@ -34,11 +36,13 @@ export const {{pascalCase name}}FeatureProcedure = igniter.procedure({
         },
 
         create: async (input: Create{{pascalCase name}}DTO): Promise<{{pascalCase name}}> => {
-          return context.providers.database.{{camelCase name}}.create({
+          return context.providers.database.{{camelCase name }}.create({
             data: {
               {{#each fields}}
               {{#unless isRelation}}
+              {{#unless (or (equals name 'id') (equals name 'createdAt') (equals name 'updatedAt'))}}
               {{name}}: input.{{name}},
+              {{/unless}}
               {{/unless}}
               {{/each}}
             }
@@ -46,18 +50,20 @@ export const {{pascalCase name}}FeatureProcedure = igniter.procedure({
         },
 
         update: async (params: { id: string } & Update{{pascalCase name}}DTO): Promise<{{pascalCase name}}> => {
-          const {{camelCase name}} = await context.providers.database.{{camelCase name}}.findUnique({
+          const {{camelCase name}} = await context.providers.database.{{lowerCase name }}.findUnique({
             where: { id: params.id }
           });
 
           if (!{{camelCase name}}) throw new Error("{{pascalCase name}} not found");
 
-          return context.providers.database.{{camelCase name}}.update({
+          return context.providers.database.{{lowerCase name }}.update({
             where: { id: params.id },
             data: {
               {{#each fields}}
               {{#unless isRelation}}
+              {{#unless (or (equals name 'id') (equals name 'createdAt') (equals name 'updatedAt'))}}
               {{name}}: params.{{name}},
+              {{/unless}}
               {{/unless}}
               {{/each}}
             }
@@ -65,7 +71,7 @@ export const {{pascalCase name}}FeatureProcedure = igniter.procedure({
         },
 
         delete: async (params: { id: string }): Promise<{ id: string }> => {
-          await context.providers.database.{{camelCase name}}.delete({
+          await context.providers.database.{{lowerCase name }}.delete({
             where: { id: params.id }
           });
 

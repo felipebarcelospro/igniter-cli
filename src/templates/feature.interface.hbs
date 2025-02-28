@@ -11,13 +11,11 @@ export interface {{pascalCase name}} {
   {{#each fields}}
   {{#if isRelation}}
   {{#if isList}}
-  /** Array of IDs representing the related {{pascalCase type}} entities */
-  {{name}}Ids: string[];
   /** Related {{pascalCase type}} entities */
-  {{name}}: {{pascalCase type}}[];
+  {{name}}?: {{pascalCase type}}[];
   {{else}}
   /** Related {{pascalCase type}} entity */
-  {{name}}: {{pascalCase type}};
+  {{name}}{{#if isOptional}}?{{/if}}: {{pascalCase type}};
   {{/if}}
   {{else}}
   /** {{pascalCase name}}'s {{name}} property */
