@@ -24,6 +24,7 @@ export const LIA_FILES = [
   { name: '.github/copilot.next.instructions.md', template: 'copilot.next.instructions.hbs' },
   { name: '.github/copilot.review.instructions.md', template: 'copilot.review.instructions.hbs' },
   { name: '.github/copilot.test.instructions.md', template: 'copilot.test.instructions.hbs' },
+  { name: '.github/copilot.form.instructions.md', template: 'copilot.form.instructions.hbs' },
   { name: '.vscode/settings.json', template: 'vscode.settings.hbs' }
 ]
 

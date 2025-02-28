@@ -376,11 +376,13 @@ class IgniterCLI extends CLIHelper {
     const igniterContextFile = TemplateHandler.render('igniter.context', {})
     const igniterRouterFile = TemplateHandler.render('igniter.router', {})    
     const igniterRouteHandlerFile = TemplateHandler.render('route', {})    
+    const useFormFile = TemplateHandler.render('use-form-with-zod', {})    
     const igniterFile = TemplateHandler.render('igniter', {})
 
     this.createFile('src/igniter.client.ts', igniterClientFile)
     this.createFile('src/igniter.context.ts', igniterContextFile)
     this.createFile('src/igniter.router.ts', igniterRouterFile)
+    this.createFile('src/core/hooks/use-form-with-zod.ts', useFormFile)
     this.createFile('src/app/api/[[...all]]/route.ts', igniterRouteHandlerFile)
     this.createFile('src/igniter.ts', igniterFile)
     
