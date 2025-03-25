@@ -1,27 +1,25 @@
 #!/usr/bin/env node
 import inquirer from 'inquirer'
-import chalk from 'chalk'
-import ora from 'ora'
 import path from 'path'
 
 import { Command } from 'commander'
-import { CLIHelper } from './utils/helpers'
 import { CONFIG_FILES, DEPENDENCIES, LIA_FILES, PROJECT_STRUCTURE } from './utils/consts'
+import { CLIHelper } from './utils/helpers'
 import { TemplateHandler } from './utils/template-handler'
 import { registerHelpers } from './utils/handlebars-helpers'
 import { PrismaSchemaParser } from './utils/prisma-schema-parser'
 import { AnalyzeCommand } from './utils/analyze'
+import { CLIStyle } from './utils/cli-style'
+import { getPackageManagerRunner, isNextJSProject } from './utils/project-utils'
 
 class IgniterCLI extends CLIHelper {
   private program: Command
-  private spinner: ora.Ora
   private schemaParser: PrismaSchemaParser
   private analyze: AnalyzeCommand
 
   constructor() {
     super()
     this.program = new Command()
-    this.spinner = ora()
     this.schemaParser = new PrismaSchemaParser()
     this.analyze = new AnalyzeCommand()
     this.setupCLI()
@@ -38,7 +36,7 @@ class IgniterCLI extends CLIHelper {
 
     this.program
       .command('init')
-      .description('Initialize a new Next.js project with Igniter Framework')
+      .description('Initialize a new Next.js project with Igniter.js')
       .action(async () => {
         await this.init()
       })
@@ -54,15 +52,17 @@ class IgniterCLI extends CLIHelper {
       .command('generate feature')
       .alias('g')
       .description('Generate a new feature')
-      .option('-n, --name [name]', 'Feature name')
+      .option('-n, --name <name>', 'Feature name')
       .option('-f, --fields <fields...>', 'Fields for the feature (format: name:type)')
-      .action(async (name, options) => {
-        if (!options.name) {
+      .option('-y, --yes', 'Automatically confirm creation if model is not found')
+      .action(async (options, params) => {
+        console.log(options, params)
+        if (!params.name) {
           await this.generateAllFeatures()
           return
         }
-
-        await this.generateFeature(name, options.fields || [])
+        
+        await this.generateFeature(params.name, params.fields || [], params.yes)
       })
 
     this.program.parse()
@@ -70,41 +70,172 @@ class IgniterCLI extends CLIHelper {
 
   private async init() {
     console.clear()
-    console.log(chalk.bold.cyan('\n🚀 Welcome to Igniter Framework!\n'))
-    console.log(chalk.gray('Let\'s set up your new project. This may take a few minutes...\n'))
-
+    CLIStyle.startSequence('Welcome to Igniter.js CLI')
+    CLIStyle.logInfo('Let\'s configure your new project together. I\'ll guide you through each step.')
+    
     try {
-      // Check dependencies
-      this.spinner.start('Checking required dependencies...')
+      const spinner = CLIStyle.createSpinner('Checking required dependencies...')
+      spinner.start()
       this.checkDependencies(DEPENDENCIES.required)
-      this.spinner.succeed()
+      spinner.succeed('All required dependencies are installed')
 
-      // Setup project
-      await this.setupProject()
+      const preferences = await this.gatherUserPreferences()
+      await this.setupProject(preferences)
     } catch (error) {
-      this.spinner.fail(chalk.red('Project initialization failed'))
-      console.error('\n' + chalk.red('Error details:'))
-      console.error(chalk.red(error))
+      CLIStyle.logError('Project initialization failed', error)
       process.exit(1)
     }
   }
-  
-  private async generateFeature(name: string, fields: string[] = []) {
+
+  private async gatherUserPreferences() {
+    CLIStyle.startSequence('Project Configuration')
+    
+    const isNextProject = isNextJSProject()
+    
+    const packageManager = await inquirer.prompt({
+      type: 'list',
+      name: 'value',
+      message: 'Which package manager do you prefer?',
+      choices: [
+        { name: 'bun', value: 'bun' },
+        { name: 'npm', value: 'npm' },
+        { name: 'yarn', value: 'yarn' },
+        { name: 'pnpm', value: 'pnpm' }
+      ],
+      default: 'npm'
+    })
+
+    let projectType = { value: 'nextjs' }
+    if (!isNextProject) {
+      projectType = await inquirer.prompt({
+        type: 'list',
+        name: 'value',
+        message: 'What type of project are you creating?',
+        choices: [
+          {
+            name: 'Fullstack (Igniter.js, Next.js, Zod and Prisma)',
+            value: 'nextjs',
+          },
+          {
+            name: 'Rest API (Igniter.js, Express, Zod and Prisma)',
+            value: 'express',
+          },
+          {
+            name: 'Only setup Igniter.js',
+            value: 'igniter',
+          }
+        ]
+      })
+    }
+
+    const database = await inquirer.prompt({
+      type: 'list',
+      name: 'value',
+      message: 'Would you like to set up Prisma ORM?',
+      choices: [
+        { 
+          name: 'Yes, set up Prisma',
+          value: 'prisma',
+        },
+        { 
+          name: 'No, skip database setup',
+          value: 'none',
+        }
+      ],
+      default: 'prisma'
+    })
+    
+    // Display confirmation of selections
+    console.log('\n')
+    CLIStyle.logInfo('Configuration summary:')
+    CLIStyle.logInfo(`Package Manager: ${packageManager.value}`)
+    if (!isNextProject) CLIStyle.logInfo(`Project Type: ${projectType.value}`)
+    CLIStyle.logInfo(`Database: ${database.value === 'prisma' ? 'Prisma ORM' : 'None'}`)
+    
+    if (database.value === 'prisma') {
+      console.log('\n')
+      CLIStyle.logInfo(`Note: With Prisma enabled, you can use the igniter generate feature command to automatically create features based on your Prisma schema models.`)
+    }
+    
+    const confirm = await inquirer.prompt({
+      type: 'confirm',
+      name: 'value',
+      message: 'Ready to proceed with the installation?',
+      default: true
+    })
+    
+    if (!confirm.value) {
+      CLIStyle.logWarning('Installation cancelled by the user')
+      process.exit(0)
+    }
+    
+    CLIStyle.endSequence()
+    return {
+      'package-manager': packageManager.value,
+      'project-type': projectType.value,
+      'database': database.value,
+    }
+  }
+
+  private async generateFeature(name: string, fields: string[] = [], autoConfirm: boolean = false) {
     console.clear()
-    console.log(chalk.bold.cyan(`\n🏗️  Generating feature: ${chalk.white(name)}\n`))
+    CLIStyle.startSequence(`Generating Feature: ${name}`)
 
     try {
+      // Check if model exists in Prisma
+      const spinner = CLIStyle.createSpinner('Parsing Prisma schema...')
+      spinner.start()
+      
+      const modelExists = this.schemaParser.hasModel(name)
+      
+      if (!modelExists) {
+        spinner.warn(`Model "${name}" not found in Prisma schema`)
+        
+        // Ask user if they want to create a feature without a model
+        let createFeature = autoConfirm
+        
+        if (!autoConfirm) {
+          CLIStyle.logInfo("The model doesn't exist in your Prisma schema")
+          console.log(CLIStyle.getVerticalLine())
+          
+          const answer = await inquirer.prompt({
+            type: 'confirm',
+            name: 'createFeature',
+            message: CLIStyle.logPrompt(`Would you like to create a basic feature for "${name}" anyway?`),
+            default: true
+          })
+          
+          createFeature = answer.createFeature
+        }
+        
+        if (!createFeature) {
+          CLIStyle.logWarning('Feature generation cancelled')
+          CLIStyle.endSequence()
+          return
+        }
+        
+        CLIStyle.logInfo(`Creating basic feature for "${name}" without database model`)
+      }
+      
       // Parse fields from Prisma schema
-      this.spinner.start('Parsing Prisma schema...')
-      let parsedFields = this.schemaParser.getModelFields(name)
-
-      // If no fields found in schema, use provided fields as fallback
-      if (parsedFields.length === 0 && fields.length > 0) {
+      let parsedFields: any[] = []
+      if (modelExists) {
+        parsedFields = this.schemaParser.getModelFields(name)
+        
+        // Transform parsed fields to include relationship info
+        parsedFields = parsedFields.map(field => ({
+          ...field,
+          isRelation: !!field.relations,
+          isList: field.isList || (field.relations?.type === 'one-to-many' || field.relations?.type === 'many-to-many'),
+          isOptional: field.hasDefault || field.isOptional
+        }))
+      } else if (fields.length > 0) {
+        // Use provided fields as fallback
         parsedFields = fields.map(field => {
           const [name, type] = field.split(':')
           return {
             name,
-            type,
+            type: type || 'String',
             zodType: 'z.string()',
             description: `${name} field`,
             isOptional: false,
@@ -114,20 +245,12 @@ class IgniterCLI extends CLIHelper {
             relations: undefined
           }
         })
-      } else {
-        // Transform parsed fields to include relationship info
-        parsedFields = parsedFields.map(field => ({
-          ...field,
-          isRelation: !!field.relations,
-          isList: field.isList || (field.relations?.type === 'one-to-many' || field.relations?.type === 'many-to-many'),
-          isOptional: field.hasDefault || field.isOptional
-        }))
       }
 
-      this.spinner.succeed()
+      spinner.succeed('Schema analysis completed')
 
       // Create feature directory
-      this.spinner.start('Creating feature directory structure...')
+      CLIStyle.startStep('Creating directory structure')
       const featurePath = path.join('src/features', name.toLowerCase())
       this.createDir(featurePath)
 
@@ -157,16 +280,17 @@ class IgniterCLI extends CLIHelper {
       for (const dir of featureDirs) {
         this.createDir(path.join(featurePath, dir))
       }
-
-      this.spinner.succeed()
+      CLIStyle.endStep()
 
       // Generate files from templates
+      CLIStyle.startStep('Generating feature files')
       const templateData = {
         name,
-        fields: parsedFields
+        fields: parsedFields,
+        hasFields: parsedFields.length > 0,
+        noModel: !modelExists
       }
 
-      this.spinner.start('Generating feature files...')
       const templates = {
         'feature.index': 'index.ts',
         'feature.interface': `${name.toLowerCase()}.interface.ts`,
@@ -178,20 +302,30 @@ class IgniterCLI extends CLIHelper {
         const content = TemplateHandler.render(template, templateData)
         this.createFile(path.join(featurePath, filePath), content)
       }
+      CLIStyle.endStep()
 
-      this.spinner.succeed()
-      console.log('\n' + chalk.bold.green(`✨ Feature ${chalk.white(name)} generated successfully! ✨\n`))
+      CLIStyle.endSequence()
+      CLIStyle.logSuccess(`Feature ${name} generated successfully!`)
+      
+      if (modelExists && parsedFields.length > 0) {
+        CLIStyle.logInfo(`Created ${Object.keys(templates).length} files with ${parsedFields.length} fields from Prisma model`)
+      } else if (!modelExists && parsedFields.length > 0) {
+        CLIStyle.logInfo(`Created ${Object.keys(templates).length} files with ${parsedFields.length} custom fields`)
+      } else if (!modelExists) {
+        CLIStyle.logInfo(`Created basic feature template without fields`)
+      } else {
+        CLIStyle.logWarning(`No fields were found in the Prisma schema for model ${name}`)
+      }
+      console.log('\n')
     } catch (error) {
-      this.spinner.fail(chalk.red('Feature generation failed'))
-      console.error('\n' + chalk.red('Error details:'))
-      console.error(chalk.red(error))
+      CLIStyle.logError('Feature generation failed', error)
       process.exit(1)
     }
   }
 
   private async generateAllFeatures() {
     console.clear()
-    console.log(chalk.bold.cyan('\n🏗️  Generating features for all Prisma models\n'))
+    CLIStyle.startSequence('Batch Feature Generation')
 
     try {
       // Get all models from schema
@@ -205,8 +339,9 @@ class IgniterCLI extends CLIHelper {
       }
 
       if (models.length === 0) {
-        console.log('\n' + chalk.yellow('⚠️  No models found in your Prisma schema.'))
-        console.log(chalk.gray('\nTip: Add some models to your schema.prisma file first.'))
+        CLIStyle.logWarning('No models found in your Prisma schema')
+        CLIStyle.logInfo('Tip: Add some models to your schema.prisma file first')
+        CLIStyle.endSequence()
         return
       }
 
@@ -214,7 +349,7 @@ class IgniterCLI extends CLIHelper {
       const { selectedModels } = await inquirer.prompt([{
         type: 'checkbox',
         name: 'selectedModels',
-        message: chalk.yellow('\n🎯 Select which models to generate features for:'),
+        message: CLIStyle.logPrompt('Select which models to generate features for:'),
         choices: models.map(model => ({
           name: model,
           value: model,
@@ -223,199 +358,273 @@ class IgniterCLI extends CLIHelper {
       }])
 
       if (selectedModels.length === 0) {
-        console.log(chalk.gray('\nNo models selected. Operation cancelled.'))
+        CLIStyle.logWarning('No models selected. Operation cancelled.')
+        CLIStyle.endSequence()
         return
       }
 
+      CLIStyle.startStep(`Generating ${selectedModels.length} features`)
+      
       // Track progress
       let completed = 0
       const total = selectedModels.length
       const failed: string[] = []
 
       for (const model of selectedModels) {
-        this.spinner.start(chalk.white(`Generating feature for ${chalk.cyan(model)} [${completed + 1}/${total}]`))
+        const spinner = CLIStyle.createSpinner(`Processing model ${model} [${completed + 1}/${total}]`)
+        spinner.start()
 
         try {
-          await this.generateFeature(model)
+          // Create a feature without displaying all the normal output
+          const featurePath = path.join('src/features', model.toLowerCase())
+          this.createDir(featurePath)
+          
+          // Create subdirectories
+          const presentationPath = path.join(featurePath, 'presentation')
+          this.createDir(presentationPath)
+          
+          for (const dir of ['components', 'hooks', 'contexts', 'utils']) {
+            const dirPath = path.join(presentationPath, dir)
+            this.createDir(dirPath)
+            this.createFile(path.join(dirPath, '.gitkeep'), '')
+          }
+          
+          for (const dir of ['controllers', 'procedures']) {
+            this.createDir(path.join(featurePath, dir))
+          }
+          
+          // Parse fields and generate templates
+          let parsedFields = this.schemaParser.getModelFields(model)
+          parsedFields = parsedFields.map(field => ({
+            ...field,
+            isRelation: !!field.relations,
+            isList: field.isList || (field.relations?.type === 'one-to-many' || field.relations?.type === 'many-to-many'),
+            isOptional: field.hasDefault || field.isOptional
+          }))
+          
+          const templateData = { name: model, fields: parsedFields }
+          const templates = {
+            'feature.index': 'index.ts',
+            'feature.interface': `${model.toLowerCase()}.interface.ts`,
+            'feature.controller': `controllers/${model.toLowerCase()}.controller.ts`,
+            'feature.procedure': `procedures/${model.toLowerCase()}.procedure.ts`
+          }
+          
+          for (const [template, filePath] of Object.entries(templates)) {
+            const content = TemplateHandler.render(template, templateData)
+            this.createFile(path.join(featurePath, filePath), content)
+          }
+          
           completed++
-
-          this.spinner.succeed(chalk.green(`✓ Generated feature for ${chalk.cyan(model)}`))
+          spinner.succeed(`Generated feature for ${model}`)
         } catch (error) {
           failed.push(model)
-          this.spinner.fail(chalk.red(`✗ Failed to generate feature for ${chalk.cyan(model)}`))
-          console.log(chalk.gray(`   Error: ${error}`))
+          spinner.fail(`Failed to generate feature for ${model}`)
+          CLIStyle.logInfo(`Error: ${error}`)
         }
 
-        // Show progress bar
+        // Show progress
         const progress = completed / total * 100
-        console.log(chalk.gray(`   Progress: ${chalk.cyan(`${Math.round(progress)}%`)} [${'='.repeat(Math.floor(progress / 5))}${' '.repeat(20 - Math.floor(progress / 5))}]`))
-        console.log('')
+        CLIStyle.logInfo(`Progress: ${Math.round(progress)}% [${'='.repeat(Math.floor(progress / 5))}${' '.repeat(20 - Math.floor(progress / 5))}]`)
       }
+      
+      CLIStyle.endStep()
+      CLIStyle.endSequence()
 
       // Final summary
-      console.log(chalk.bold.white('\n📊 Generation Summary:'))
-      console.log(chalk.green(`   ✓ Successfully generated: ${completed}/${total} features`))
+      CLIStyle.logInfo(`Generation summary:`)
+      CLIStyle.logSuccess(`Successfully generated: ${completed}/${total} features`)
 
       if (failed.length > 0) {
-        console.log(chalk.red(`   ✗ Failed to generate: ${failed.length} features`))
-        console.log(chalk.gray('\nFailed models:'))
-        failed.forEach(model => console.log(chalk.red(`   - ${model}`)))
+        CLIStyle.logWarning(`Failed to generate: ${failed.length} features`)
+        CLIStyle.logInfo('Failed models:')
+        failed.forEach(model => CLIStyle.logInfo(`- ${model}`))
       }
-
-      if (completed === total) {
-        console.log('\n' + chalk.bold.green('✨ All features generated successfully! ✨'))
-      } else {
-        console.log('\n' + chalk.yellow('⚠️  Some features could not be generated.'))
-        console.log(chalk.gray('   Check the errors above and try again.'))
-      }
-
-      console.log('')
 
     } catch (error) {
-      this.spinner.fail(chalk.red('❌ Failed to generate features'))
-      console.error('\n' + chalk.red('Error details:'))
-      console.error(chalk.gray(error))
+      CLIStyle.logError('Failed to generate features', error)
       process.exit(1)
     }
   }
 
-  protected async setupProject(): Promise<void> {
-    console.log(chalk.cyan('\n📦 Project Setup Progress\n'))
-
-    // Next.js setup
-    this.spinner.start('Creating Next.js application...')
-    await this.delay(1000) // Pequena pausa para melhor visualização
-    this.execCommand('npx create-next-app@canary --ts --turbopack --import-alias "@/*" --src-dir --tailwind --eslint --typescript --app .')
-    this.spinner.succeed('Next.js application created successfully')
+  protected async setupProject(preferences: any): Promise<void> {
+    CLIStyle.startSequence('Project Setup')
+    CLIStyle.logInfo('Setting up your Igniter project. This might take a few minutes...')
 
     // Project structure
-    await this.delay(1000)
-    this.spinner.start('Creating project structure...')
+    CLIStyle.startStep('Setting up project structure')
+    const spinner2 = CLIStyle.createSpinner('Creating directories...')
+    spinner2.start()    
+
+    const packageManager = preferences['package-manager']
+
+    const isNextProject = isNextJSProject()
+    if (isNextProject) {
+      this.createDir('src/app/api/[[...all]]')
+      this.createFile('src/app/api/[[...all]]/route.ts', TemplateHandler.render('route.hbs', {}))
+      this.createFile('src/hooks/use-form-with-zod.ts', TemplateHandler.render('use-form-with-zod', {}))
+    }
+
+    if(!isNextProject) {
+      if (preferences['project-type'] === 'express') {
+        this.execCommand(`${packageManager} init -y`)
+        this.execCommand(`${packageManager} install express`)
+        this.execCommand(`${packageManager} install --save-dev typescript ts-node @types/node @types/express`)
+
+        const packageJson = this.loadJSON('package.json')
+    
+        packageJson.name = path.basename(process.cwd())
+        packageJson.version = '1.0.0'
+        packageJson.legacyPeerDeps = true
+        packageJson.scripts = {}
+        packageJson.scripts['build'] = 'tsc'
+        packageJson.scripts['start'] = 'node dist/server.js'
+        packageJson.scripts['dev'] = 'ts-node src/server.ts'
+
+        this.saveJSON('package.json', packageJson)        
+        
+        this.createFile('src/server.ts', TemplateHandler.render('express.server.hbs', {}))
+
+        this.createFile('README.md', TemplateHandler.render('readme.hbs', {}))
+        this.createFile('eslintrc.json', TemplateHandler.render('eslintrc.hbs', {}))
+        this.createFile('docker-compose.yml', TemplateHandler.render('docker-compose.hbs', {}))
+      }
+
+      if (preferences['project-type'] === 'nextjs') {
+        this.execCommand(`npx create-next-app@latest --ts --tailwind --eslint	--app	--src-dir	--turbopack	--import-alias="@/*" --use-${packageManager} .`)
+
+        const packageJson = this.loadJSON('package.json')
+    
+        packageJson.name = path.basename(process.cwd())
+        packageJson.version = '1.0.0'
+        packageJson.legacyPeerDeps = true
+
+        this.saveJSON('package.json', packageJson)
+        
+        this.createFile('.github/copilot.next.instructions.md', TemplateHandler.render('copilot.next.instructions.hbs', {}))
+        this.createFile('.github/copilot.form.instructions.md', TemplateHandler.render('copilot.form.instructions.hbs', {}))
+
+        this.createFile('src/app/page.tsx', TemplateHandler.render('page.hbs', {}))
+        this.createFile('src/app/layout.tsx', TemplateHandler.render('layout.hbs', {}))
+        this.createFile('src/app/globals.css', TemplateHandler.render('globals.hbs', {}))
+
+        this.createDir('src/app/api/[[...all]]')
+        this.createFile('src/app/api/[[...all]]/route.ts', TemplateHandler.render('route.hbs', {}))
+
+        this.createFile('src/hooks/use-form-with-zod.ts', TemplateHandler.render('use-form-with-zod', {}))
+
+        this.createFile('README.md', TemplateHandler.render('readme.hbs', {}))
+        this.createFile('eslintrc.json', TemplateHandler.render('eslintrc.hbs', {}))
+        this.createFile('docker-compose.yml', TemplateHandler.render('docker-compose.hbs', {}))
+
+        const runner = getPackageManagerRunner(packageManager)
+        if(!runner) {
+          CLIStyle.logError('Unsupported package manager. Please use npm, yarn, pnpm or bun.')
+          process.exit(1)
+        }
+        
+        console.log(runner)
+
+        this.execCommand(`${runner} shadcn@latest init -y -f --src-dir --css-variables --base-color zinc`)
+        this.execCommand(`${runner} shadcn@latest add -y -a`)
+      }
+    }
+    
     this.createDirectoryStructure(PROJECT_STRUCTURE)
-    this.spinner.succeed('Project structure created successfully')
 
-    // Prisma setup
-    await this.delay(1000)
-    this.spinner.start('Initializing Prisma...')
-    this.execCommand('npx prisma init')
-    this.execCommand('rm ./.env')
-    const prismaFile = TemplateHandler.render('prisma', {})
-    this.createFile('src/core/providers/prisma.ts', prismaFile)
-    this.spinner.succeed('Prisma initialized successfully')
+    spinner2.succeed('Directory structure created')
+    CLIStyle.endStep()
 
-    // Testing environment
-    await this.delay(1000)
-    this.spinner.start('Setting up testing environment...')
-    this.execCommand('npm install --save-dev vitest')
-    this.execCommand('npm install --save-dev @vitejs/plugin-react')
-    this.execCommand('npm install --save-dev vite-tsconfig-paths')
-    this.spinner.succeed('Testing environment setup completed')
+    // Prisma setup (conditional)
+    if (preferences.database === 'prisma') {
+      CLIStyle.startStep('Setting up Prisma ORM')
+      const spinner3 = CLIStyle.createSpinner('Initializing Prisma...')
+      spinner3.start()
+      this.execCommand('npx prisma init')
+      this.execCommand('rm ./.env')
+      const prismaFile = TemplateHandler.render('prisma', {})
+      this.createFile('src/providers/prisma.ts', prismaFile)
+      spinner3.succeed('Prisma initialized')
+      CLIStyle.endStep()
+    } else {
+      CLIStyle.logInfo('Skipping Prisma setup as per your preference')
+    }
 
     // Core dependencies
-    await this.delay(1000)
-    this.spinner.start('Installing core dependencies...')
-    this.execCommand('npm install --save @igniter-js/eslint-config')
-    this.execCommand('npm install --save @igniter-js/core')
-    this.spinner.succeed('Core dependencies installed successfully')
+    CLIStyle.startStep('Installing Igniter.js and updating environment files')
+    const spinner5 = CLIStyle.createSpinner('Installing packages...')
+    spinner5.start()
+    this.execCommand(`${packageManager} install @igniter-js/eslint-config`)
+    this.execCommand(`${packageManager} install @igniter-js/core`)
 
-    // Shadcn/UI setup
-    await this.delay(1000)
-    this.spinner.start('Setting up Shadcn/UI...')
-    this.execCommand('npm config set legacy-peer-deps true')
-    this.execCommand('npx shadcn@canary init -d -y')
-    const content = TemplateHandler.render('components.json', {})
-    this.updateFile('components.json', content)
-    this.execCommand('npx shadcn@canary add --all')
-    this.spinner.succeed('Shadcn/UI setup completed')
-
-    // Environment files
-    await this.delay(1000)
-    this.spinner.start('Creating environment files...')
     const envContent = TemplateHandler.render('env.hbs', {})
     this.createFile('.env', envContent)
-    this.spinner.succeed('Environment files created successfully')
 
-    // Project files configuration
-    await this.delay(1000)
-    this.spinner.start('Configuring project files...')
-    this.execCommand('mv ./src/lib/utils.ts ./src/core/utils/cn.ts')
-    this.execCommand('rm -rf ./src/lib')
+    this.createFile('src/igniter.client.ts', TemplateHandler.render('igniter.client', {}))
+    this.createFile('src/igniter.context.ts', TemplateHandler.render('igniter.context', {}))
+    this.createFile('src/igniter.router.ts', TemplateHandler.render('igniter.router', {}))
+    this.createFile('src/igniter.ts', TemplateHandler.render('igniter', {}))
 
-    const pageContent = TemplateHandler.render('page.hbs', {})
-    this.updateFile('src/app/page.tsx', pageContent)
-
-    const layoutContent = TemplateHandler.render('layout.hbs', {})
-    this.updateFile('src/app/layout.tsx', layoutContent)
-
-    const globalsContent = TemplateHandler.render('globals.hbs', {})
-    this.updateFile('src/app/globals.css', globalsContent)
-    this.spinner.succeed('Project files configured successfully')
-
-    // Package configuration
-    await this.delay(1000)
-    this.spinner.start('Updating package configuration...')
-    const packageJson = this.loadJSON('package.json')
-    for (const config of CONFIG_FILES) {
-      const content = TemplateHandler.render(config.template, {})
-      this.createFile(config.name, content)
-    }
-    this.spinner.succeed('Package configuration updated successfully')
+    spinner5.succeed('Igniter.js installed and environment files updated')
+    CLIStyle.endStep()
 
     // Lia files
-    await this.delay(1000)
-    this.spinner.start('Creating Lia files...')
+    CLIStyle.startStep('Creating Lia assistant files for GitHub Copilot')
+    const spinner10 = CLIStyle.createSpinner('Setting up Lia...')
+    spinner10.start()
+    
     for (const file of LIA_FILES) {
       const content = TemplateHandler.render(file.template, {})
       this.createFile(file.name, content)
     }
-    this.spinner.succeed('Lia files created successfully')
 
-    this.spinner.start('Creating igniter files...')
+    spinner10.succeed('Lia assistant configured')
+    CLIStyle.endStep()
 
-    const igniterClientFile = TemplateHandler.render('igniter.client', {})
-    const igniterContextFile = TemplateHandler.render('igniter.context', {})
-    const igniterRouterFile = TemplateHandler.render('igniter.router', {})    
-    const igniterRouteHandlerFile = TemplateHandler.render('route', {})    
-    const useFormFile = TemplateHandler.render('use-form-with-zod', {})    
-    const igniterFile = TemplateHandler.render('igniter', {})
+    CLIStyle.endSequence()
+    CLIStyle.logSuccess('Your Igniter project is ready!')
 
-    this.createFile('src/igniter.client.ts', igniterClientFile)
-    this.createFile('src/igniter.context.ts', igniterContextFile)
-    this.createFile('src/igniter.router.ts', igniterRouterFile)
-    this.createFile('src/core/hooks/use-form-with-zod.ts', useFormFile)
-    this.createFile('src/app/api/[[...all]]/route.ts', igniterRouteHandlerFile)
-    this.createFile('src/igniter.ts', igniterFile)
+    console.log('\n' + '🎯 Next Steps:\n')
+    console.log(`  1. Start development server:`)
+    console.log(`     $ npm run dev`)
+    console.log('')
     
-    this.spinner.succeed('Igniter files created successfully')
+    if (preferences.database === 'prisma') {
+      console.log(`  2. Start Docker services for database:`)
+      console.log(`     $ docker compose up -d`)
+      console.log('')
+      
+      console.log(`  3. Run Prisma migrations:`)
+      console.log(`     $ npx prisma migrate dev`)
+      console.log('')
+      
+      console.log(`  4. Generate features from your database models:`)
+      console.log(`     $ npx @igniter-js/cli generate feature`)
+      console.log('')
+    }
 
-    packageJson.name = path.basename(process.cwd())
-    packageJson.version = '1.0.0'
-    packageJson.legacyPeerDeps = true
+    console.log('\n' + '🎯 Next Steps:\n')
+    console.log(`  1. Start development server:`)
+    console.log(`     $ npm run dev`)
+    console.log('')
+    
+    if (preferences.database === 'prisma') {
+      console.log(`  2. Start Docker services for database:`)
+      console.log(`     $ docker compose up -d`)
+      console.log('')
+      
+      console.log(`  3. Run Prisma migrations:`)
+      console.log(`     $ npx prisma migrate dev`)
+      console.log('')
+      
+      console.log(`  4. Generate features from your database models:`)
+      console.log(`     $ npx @igniter-js/cli generate feature`)
+      console.log('')
+    }
 
-    packageJson.scripts['igniter'] = 'npx @igniter-js/cli'
-
-    this.saveJSON('package.json', packageJson)
-    this.spinner.succeed('Package configuration updated successfully')
-
-    console.log('\n' + chalk.bold.cyan('🎉 Setup Complete!\n'))
-    console.log(chalk.bold('Next Steps:'))
-    console.log(`
-  ${chalk.cyan('1.')} Start development server:
-     ${chalk.gray('$')} ${chalk.white('npm run dev')}
-
-  ${chalk.cyan('2.')} Start Docker services:
-     ${chalk.gray('$')} ${chalk.white('docker compose up -d')}
-
-  ${chalk.cyan('3.')} Run Prisma migrations client:
-     ${chalk.gray('$')} ${chalk.white('npx prisma migrate dev')}
-
-  ${chalk.cyan('4.')} Create your first feature:
-     ${chalk.gray('$')} ${chalk.white('npx @igniter-js/cli generate feature')}
-
-  ${chalk.cyan('📚')} Documentation: ${chalk.blue('https://github.com/felipebarcelospro/igniter-js')}
-  ${chalk.cyan('💡')} Need help? ${chalk.blue('https://github.com/felipebarcelospro/igniter-js/issues')}
-    `)
-    console.log(chalk.bold.green('\n✨ Happy coding! ✨\n'))
+    console.log(`  📚 Documentation: https://github.com/felipebarcelospro/igniter-js`)
+    console.log(`  💡 Need help? https://github.com/felipebarcelospro/igniter-js/issues`)
+    console.log('\n' + '✨ Happy coding with Igniter! ✨\n')
   }
 }
 
