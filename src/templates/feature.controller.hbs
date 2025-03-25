@@ -1,4 +1,6 @@
+{{#unless noModel}}
 import { z } from "zod";
+{{/unless}}
 import { igniter } from "@/igniter";
 import { {{pascalCase name}}FeatureProcedure } from "../procedures/{{kebabCase name}}.procedure";
 
@@ -6,6 +8,17 @@ export const {{pascalCase name}}Controller = igniter.controller({
   name: "{{kebabCase name}}",
   path: "/{{kebabCase name}}",
   actions: {
+    {{#if noModel}}
+    hello: igniter.query({
+      method: "GET",
+      path: "/hello",
+      use: [{{pascalCase name}}FeatureProcedure()],
+      handler: async ({ response, context }) => {
+        const result = await context.{{camelCase name}}.hello();
+        return response.success(result);
+      }
+    }),
+    {{else}}
     findMany: igniter.query({
       method: "GET",
       path: "/",
@@ -22,7 +35,6 @@ export const {{pascalCase name}}Controller = igniter.controller({
         return response.success(result);
       }
     }),
-
     findOne: igniter.query({
       method: "GET",
       path: "/:id" as const,
@@ -32,7 +44,6 @@ export const {{pascalCase name}}Controller = igniter.controller({
         return response.success(result);
       }
     }),
-
     create: igniter.mutation({
       method: "POST",
       path: "/",
@@ -49,7 +60,6 @@ export const {{pascalCase name}}Controller = igniter.controller({
         return response.success(result);
       }
     }),
-
     update: igniter.mutation({
       method: "PUT",
       path: "/:id" as const,
@@ -71,7 +81,6 @@ export const {{pascalCase name}}Controller = igniter.controller({
         return response.success(result);
       }
     }),
-
     delete: igniter.mutation({
       method: "DELETE",
       path: "/:id" as const,
@@ -81,5 +90,6 @@ export const {{pascalCase name}}Controller = igniter.controller({
         return response.success(null);
       }
     })
+    {{/if}}
   }
 });
