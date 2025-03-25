@@ -1,11 +1,22 @@
 import { igniter } from "@/igniter";
+{{#unless noModel}}
 import type { {{pascalCase name}}, Create{{pascalCase name}}DTO, Update{{pascalCase name}}DTO, {{pascalCase name}}QueryParams } from "../{{kebabCase name}}.interface";
+{{/unless}}
 
 export const {{pascalCase name}}FeatureProcedure = igniter.procedure({
   name: "{{pascalCase name}}FeatureProcedure",
+  {{#if noModel}}
+  handler: async () => {
+  {{else}}
   handler: async (_, { context }) => {
+  {{/if}}
     return {
       {{camelCase name}}: {
+        {{#if noModel}}
+        hello: async (): Promise<{ message: string }> => {
+          return { message: 'Hello from {{pascalCase name}} feature!' };
+        }
+        {{else}}
         findMany: async (query: {{pascalCase name}}QueryParams): Promise<{{pascalCase name}}[]> => {
           return context.providers.database.{{lowerCase name }}.findMany({
             where: query.search ? {
@@ -26,7 +37,6 @@ export const {{pascalCase name}}FeatureProcedure = igniter.procedure({
             orderBy: query.sortBy ? {[query.sortBy]: query.sortOrder || 'asc'} : undefined
           });
         },
-
         findOne: async (params: { id: string }): Promise<{{pascalCase name}} | null> => {
           return context.providers.database.{{camelCase name }}.findUnique({
             where: {
@@ -34,7 +44,6 @@ export const {{pascalCase name}}FeatureProcedure = igniter.procedure({
             }
           });
         },
-
         create: async (input: Create{{pascalCase name}}DTO): Promise<{{pascalCase name}}> => {
           return context.providers.database.{{camelCase name }}.create({
             data: {
@@ -48,14 +57,11 @@ export const {{pascalCase name}}FeatureProcedure = igniter.procedure({
             }
           });
         },
-
         update: async (params: { id: string } & Update{{pascalCase name}}DTO): Promise<{{pascalCase name}}> => {
           const {{camelCase name}} = await context.providers.database.{{lowerCase name }}.findUnique({
             where: { id: params.id }
           });
-
           if (!{{camelCase name}}) throw new Error("{{pascalCase name}} not found");
-
           return context.providers.database.{{lowerCase name }}.update({
             where: { id: params.id },
             data: {
@@ -69,14 +75,13 @@ export const {{pascalCase name}}FeatureProcedure = igniter.procedure({
             }
           });
         },
-
         delete: async (params: { id: string }): Promise<{ id: string }> => {
           await context.providers.database.{{lowerCase name }}.delete({
             where: { id: params.id }
           });
-
           return { id: params.id };
         }
+        {{/if}}
       }
     };
   },
