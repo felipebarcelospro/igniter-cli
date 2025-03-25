@@ -1,17 +1,10 @@
 export const PROJECT_STRUCTURE = {
-  docs: ['.gitkeep'],
-  public: [],
-  scripts: ['.gitkeep'],
-  '.github/actions': ['.gitkeep'],
+  '.github': [],
   'src/configs': ['.gitkeep'],
-  'src/core/design-system': [],
-  'src/core/utils': [],
-  'src/core/providers': [],
-  'src/app/api/[[...all]]': [],
+  'src/lib': ['.gitkeep'],
+  'src/providers': ['.gitkeep'],
   'src/features': ['.gitkeep'],
 }
-
-
 
 export const DEPENDENCIES = {
   required: ['docker', 'node', 'npm'],
@@ -31,11 +24,7 @@ export const LIA_FILES = [
 export const CONFIG_FILES = [
   { name: 'README.md', template: 'readme' },
   { name: 'eslintrc.json', template: 'eslintrc' },
-  { name: 'components.json', template: 'components.json' },
   { name: 'docker-compose.yml', template: 'docker-compose' },
-  { name: 'vitest.config.ts', template: 'vitest.config' },
 ]
 
-export const INTERACTIVE_COMMANDS = [
-  'shadcn',
-]
+export const INTERACTIVE_COMMANDS = [] as const

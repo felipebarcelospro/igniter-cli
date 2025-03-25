@@ -1,11 +1,12 @@
 import fs from 'fs'
 import path from 'path'
 import chalk from 'chalk'
+import ora from 'ora'
+
 import { exec } from 'child_process'
 import { promisify } from 'util'
-import { PrismaSchemaParser } from '../utils/prisma-schema-parser'
+import { PrismaSchemaParser } from './prisma-schema-parser'
 import { CLIHelper } from './helpers'
-import ora from 'ora'
 
 const execAsync = promisify(exec)
 

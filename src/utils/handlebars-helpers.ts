@@ -39,18 +39,35 @@ export function registerHelpers() {
     return str.toLowerCase()
   })
 
-  Handlebars.registerHelper('getTypeFormat', (type: string, isRelation: boolean) => {
+  Handlebars.registerHelper('getTypeFormat', (type: string, isRelation: boolean, isEnum?: boolean) => {
     const primitiveTypes = ['string', 'number', 'boolean', 'date', 'datetime', 'any', 'bigint', 'undefined', 'null', 'never', 'unknown', 'void']
+    const numericTypes = ['float', 'double', 'int', 'integer', 'decimal', 'long', 'short']
+    
+    // Normalizar o tipo para minúsculas para comparação consistente
     const formattedType = type.toLowerCase()
-
+  
+    // Verificar se é um enum
+    if (isEnum) {
+      // Para enums, retornamos o tipo original, pois precisamos manter a referência ao enum
+      return type
+    }
+  
+    // Converter datetime para Date
     if (formattedType === 'datetime') {
       return 'Date'      
     }
     
+    // Converter todos os tipos numéricos para number
+    if (numericTypes.includes(formattedType)) {
+      return 'number'
+    }
+    
+    // Manter tipos primitivos como estão
     if (primitiveTypes.includes(formattedType) && !isRelation) {
       return formattedType
     }
     
+    // Retornar o tipo original para outros casos
     return type
   })
 

@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { INTERACTIVE_COMMANDS } from './consts'
 
-export abstract class CLIHelper {
+export class CLIHelper {
   protected execCommand(command: string): void {
     try {
       const needsInteraction = INTERACTIVE_COMMANDS.some((cmd: string) => command.includes(cmd))
