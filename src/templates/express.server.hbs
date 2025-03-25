@@ -1,0 +1,33 @@
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import { AppRouter } from './igniter.router';
+import { createIgniterAppContext } from './igniter.context';
+
+// Initialize Express server
+const app = express();
+
+// Configure middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Mount Igniter router
+app.use(async (req: Request, res: Response) => {
+  return AppRouter.handler(req)
+});
+
+// Global error handler
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error('Express error handler:', err);
+  
+  res.status(500).json({ 
+    status: 500, 
+    message: 'Internal Server Error'
+  });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`✅ Server started at http://localhost:${PORT}`);
+  console.log(`🚀 API routes available at http://localhost:${PORT}/api/v1`);
+});
