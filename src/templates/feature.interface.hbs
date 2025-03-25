@@ -1,7 +1,28 @@
+{{#if noModel}}
+/**
+ * Represents a basic interface for the {{pascalCase name}} feature.
+ * Since this feature was created without a Prisma model, you can extend
+ * this interface with your own properties as needed.
+ */
+export interface {{pascalCase name}}Response {
+  message: string;
+}
+{{else}}
 {{#each fields}}
 {{#if relations}}
 import type { {{pascalCase type}} } from '../{{kebabCase type}}/{{kebabCase type}}.interface';
 {{/if}}
+{{/each}}
+{{! Seção para gerar os Enums }}
+{{#each enums}}
+/**
+ * Enum representing the possible values for {{name}}
+ */
+export enum {{pascalCase name}} {
+  {{#each values}}
+  {{this}} = '{{this}}',
+  {{/each}}
+}
 {{/each}}
 
 /**
@@ -19,7 +40,7 @@ export interface {{pascalCase name}} {
   {{/if}}
   {{else}}
   /** {{pascalCase name}}'s {{name}} property */
-  {{name}}: {{getTypeFormat type isRelation}}{{#if isOptional}}{{#unless hasDefault}}  | null{{/unless}}{{/if}};
+  {{name}}: {{getTypeFormat type isRelation isEnum}}{{#if isOptional}}{{#unless hasDefault}}  | null{{/unless}}{{/if}};
   {{/if}}
   {{/each}}
 }
@@ -36,7 +57,7 @@ export interface Create{{pascalCase name}}DTO {
   {{#unless (equals name (concat (lowerCase ../name) "Id"))}}
   {{#unless isRelation}}
   /** {{pascalCase name}}'s {{name}} property  */
-  {{name}}{{#if isOptional}}?{{/if}}: {{getTypeFormat type isRelation}}{{#if isOptional}} | null{{/if}};
+  {{name}}: {{getTypeFormat type isRelation isEnum}}{{#if isOptional}}{{#unless hasDefault}}  | null{{/unless}}{{/if}};
   {{/unless}}
   {{/unless}}
   {{/if}}
@@ -55,7 +76,7 @@ export interface Update{{pascalCase name}}DTO {
   {{#unless (equals name (concat (lowerCase ../name) "Id"))}}
   {{#unless isRelation}}
   /** {{pascalCase name}}'s {{name}} property  */
-  {{name}}?: {{getTypeFormat type isRelation}}{{#if isOptional}} | null{{/if}};
+  {{name}}?: {{getTypeFormat type isRelation isEnum}}{{#if isOptional}}{{#unless hasDefault}}  | null{{/unless}}{{/if}};
   {{/unless}}
   {{/unless}}
   {{/if}}
@@ -63,7 +84,7 @@ export interface Update{{pascalCase name}}DTO {
 }
 
 /**
- * Query parameters for fetching Category entities
+ * Query parameters for fetching {{pascalCase name}} entities
  */
 export interface {{pascalCase name}}QueryParams {
   /** Current page number for pagination */
@@ -77,3 +98,4 @@ export interface {{pascalCase name}}QueryParams {
   /** Search term for filtering */
   search?: string;
 }
+{{/if}}
