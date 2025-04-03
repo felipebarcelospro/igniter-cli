@@ -121,7 +121,7 @@ export function getPackageManagerRunner(packageManager: 'bun' | 'npm' | 'yarn' |
   const runners = {
     npm: 'npx',
     yarn: 'yarn',
-    pnpm: 'pnpx',
+    pnpm: 'pnpm',
     bun: 'bunx'
   }
 
