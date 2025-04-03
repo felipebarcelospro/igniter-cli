@@ -31,29 +31,7 @@ export class CLIHelper {
   // Método para ajustar comandos para Windows
   private adjustCommandForWindows(command: string): string {
     if (!isWindows()) return command
-
-    // Ajustes específicos para Windows
-    let adjustedCommand = command;
-    
-    // Ajustar comandos npm/yarn/pnpm/bun no Windows que podem precisar do .cmd
-    if (adjustedCommand.startsWith('npx ')) {
-      adjustedCommand = adjustedCommand.replace(/^npx /, 'npx.cmd ')
-    }
-    
-    // Ajustar comandos para gerenciadores de pacotes no Windows
-    const packageManagerCommands = ['npm', 'yarn', 'pnpm', 'bun'];
-    for (const pm of packageManagerCommands) {
-      if (adjustedCommand.startsWith(`${pm} `)) {
-        adjustedCommand = adjustedCommand.replace(new RegExp(`^${pm} `), `${pm}.cmd `)
-      }
-    }
-    
-    // Ajustar comandos que usam ferramentas externas
-    if (adjustedCommand.includes('shadcn')) {
-      adjustedCommand = adjustedCommand.replace(/shadcn@latest/g, 'shadcn.cmd@latest')
-    }
-    
-    return adjustedCommand
+    return command
   }
 
   protected createDir(dir: string): void {
