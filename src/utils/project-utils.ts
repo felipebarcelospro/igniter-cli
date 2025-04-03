@@ -120,10 +120,10 @@ export function getPackageManagerRunner(packageManager: 'bun' | 'npm' | 'yarn' |
   // Check if the package manager is supported
   const runners = {
     npm: 'npx',
-    yarn: 'yarn',
-    pnpm: 'pnpm',
-    bun: 'bunx'
+    yarn: 'npx',
+    pnpm: 'pnpm dlx',
+    bun: 'bunx --bun'
   }
 
-  return runners[packageManager]
+  return runners[packageManager] || 'npx'
 }
