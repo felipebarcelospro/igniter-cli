@@ -18,6 +18,7 @@ Code generation CLI for Igniter.js projects - the essential tool to boost produc
 * **Framework Integration**: Seamlessly integrates with Next.js and the Igniter Framework
 * **Developer Experience**: Intuitive commands and helpful error messages
 * **Productivity Boost**: Automates repetitive tasks and enforces consistency
+* **Cross-Platform**: Works seamlessly on Windows, macOS, and Linux
 
 ## 📦 Installation
 
@@ -32,8 +33,11 @@ npx @igniter-js/cli
 ## 🚀 Quick Start
 
 ```bash
-# Initialize a new project with Igniter Framework
+# Initialize a new project with Igniter Framework in the current directory
 igniter init
+
+# Initialize a new project in a specific directory
+igniter init -d my-igniter-app
 
 # Generate a new feature
 igniter generate feature -n users
@@ -49,8 +53,15 @@ igniter generate feature
 Initializes a new Next.js project with the complete Igniter Framework structure:
 
 ```bash
+# Initialize in the current directory
 igniter init
+
+# Initialize in a specific directory (creates the directory if it doesn't exist)
+igniter init -d my-igniter-app
 ```
+
+Options:
+- `-d, --dir <directory>`: Directory to initialize the project in
 
 This command:
 - Creates a Next.js application with TypeScript, Tailwind, and ESLint
@@ -120,6 +131,17 @@ src/
   │       ├── [feature].interfaces.ts     # Type definitions
   │       └── index.ts                    # Feature exports
 ```
+
+## 🔄 Platform Compatibility
+
+Igniter CLI is designed to work seamlessly across different platforms:
+
+- **Windows**: Full compatibility with Windows command prompt and PowerShell
+- **macOS/Linux**: Native support for Unix-based terminals
+- **Path handling**: Automatic path normalization across different operating systems
+- **Terminal output**: Adaptive terminal styling based on platform capabilities
+
+The CLI automatically detects your operating system and adjusts its behavior accordingly to ensure a consistent experience.
 
 ## 🔧 Advanced Configuration
 
