@@ -562,7 +562,17 @@ class IgniterCLI extends CLIHelper {
       const spinner3 = CLIStyle.createSpinner('Initializing Prisma...')
       spinner3.start()
       this.execCommand('npx prisma init')
-      this.execCommand('rm ./.env')
+      
+      // Remover o arquivo .env de forma compatível com diferentes sistemas operacionais
+      try {
+        const envPath = normalizePath('./.env');
+        if (fs.existsSync(envPath)) {
+          fs.unlinkSync(envPath);
+        }
+      } catch (error) {
+        CLIStyle.logWarning(`Failed to remove .env file: ${error}`);
+      }
+      
       const prismaFile = TemplateHandler.render('prisma', {})
       this.createFile('src/providers/prisma.ts', prismaFile)
       spinner3.succeed('Prisma initialized')
