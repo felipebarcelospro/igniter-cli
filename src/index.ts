@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import inquirer from 'inquirer'
 import path from 'path'
+import fs from 'fs'
 
 import { Command } from 'commander'
 import { CONFIG_FILES, DEPENDENCIES, LIA_FILES, PROJECT_STRUCTURE } from './utils/consts'
@@ -11,6 +12,7 @@ import { PrismaSchemaParser } from './utils/prisma-schema-parser'
 import { AnalyzeCommand } from './utils/analyze'
 import { CLIStyle } from './utils/cli-style'
 import { getPackageManagerRunner, isNextJSProject } from './utils/project-utils'
+import { normalizePath } from './utils/platform-utils'
 
 class IgniterCLI extends CLIHelper {
   private program: Command
@@ -37,8 +39,9 @@ class IgniterCLI extends CLIHelper {
     this.program
       .command('init')
       .description('Initialize a new Next.js project with Igniter.js')
-      .action(async () => {
-        await this.init()
+      .option('-d, --dir <directory>', 'Directory to initialize the project in')
+      .action(async (options) => {
+        await this.init(options.dir)
       })
 
     this.program
@@ -68,12 +71,30 @@ class IgniterCLI extends CLIHelper {
     this.program.parse()
   }
 
-  private async init() {
+  private async init(targetDir?: string) {
     console.clear()
     CLIStyle.startSequence('Welcome to Igniter.js CLI')
     CLIStyle.logInfo('Let\'s configure your new project together. I\'ll guide you through each step.')
     
     try {
+      // Se um diretório foi especificado, criar e navegar até ele
+      if (targetDir) {
+        CLIStyle.logInfo(`Creating project in directory: ${targetDir}`)
+        
+        // Normalizar o caminho do diretório
+        const normalizedPath = normalizePath(targetDir)
+        
+        // Criar diretório se não existir
+        if (!fs.existsSync(normalizedPath)) {
+          fs.mkdirSync(normalizedPath, { recursive: true })
+          CLIStyle.logSuccess(`Directory created: ${normalizedPath}`)
+        }
+        
+        // Navegar para o diretório
+        process.chdir(normalizedPath)
+        CLIStyle.logSuccess(`Changed to directory: ${process.cwd()}`)
+      }
+      
       const spinner = CLIStyle.createSpinner('Checking required dependencies...')
       spinner.start()
       this.checkDependencies(DEPENDENCIES.required)
