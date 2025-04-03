@@ -538,16 +538,8 @@ class IgniterCLI extends CLIHelper {
         this.createFile('eslintrc.json', TemplateHandler.render('eslintrc.hbs', {}))
         this.createFile('docker-compose.yml', TemplateHandler.render('docker-compose.hbs', {}))
 
-        const runner = getPackageManagerRunner(packageManager)
-        if(!runner) {
-          CLIStyle.logError('Unsupported package manager. Please use npm, yarn, pnpm or bun.')
-          process.exit(1)
-        }
-        
-        console.log(runner)
-
-        this.execCommand(`${runner} shadcn@latest init -y -f --src-dir --css-variables --base-color zinc`)
-        this.execCommand(`${runner} shadcn@latest add -y -a`)
+        this.execCommand(`npx shadcn@latest init -y -f --src-dir --css-variables --base-color zinc`)
+        this.execCommand(`npx shadcn@latest add -y -a`)
       }
     }
     
