@@ -488,7 +488,12 @@ class IgniterCLI extends CLIHelper {
 
     if(!isNextProject) {
       if (preferences['project-type'] === 'express') {
-        this.execCommand(`${packageManager} init -y`)
+        if (packageManager === 'pnpm') {
+          this.execCommand(`${packageManager} init`)
+        } else {
+          this.execCommand(`${packageManager} init -y`)
+        }
+        
         this.execCommand(`${packageManager} install express`)
         this.execCommand(`${packageManager} install --save-dev typescript ts-node @types/node @types/express`)
 
