@@ -25,12 +25,33 @@ export function normalizePath(filePath: string): string {
 }
 
 /**
+ * Verifica se o terminal suporta caracteres Unicode
+ * @returns {boolean} True se o terminal suportar caracteres Unicode
+ */
+export function supportsUnicode() {
+  // Verificação mais robusta de suporte a Unicode no Windows
+  const isWinOS = isWindows()
+  
+  // No Windows, verificar também a variável de ambiente TERM
+  const termVar = process.env.TERM || ''
+  const isPowerShell = process.env.SHELL?.includes('powershell') || false
+  const isWindowsTerminal = process.env.WT_SESSION !== undefined
+  
+  // Windows Terminal e PowerShell Core suportam Unicode bem
+  if (isWinOS && (isWindowsTerminal || isPowerShell || termVar.includes('xterm'))) {
+    return true
+  }
+  
+  // Para outros sistemas, verificar se é um TTY
+  return process.stdout.isTTY && !isWinOS
+}
+
+/**
  * Obtém elementos visuais apropriados para a plataforma atual
  * @returns {object} Objeto contendo elementos visuais adequados para a plataforma atual
  */
 export function getVisualElements() {
-  const isWinOS = isWindows()
-  const supportsUnicode = process.stdout.isTTY && !isWinOS
+  const hasUnicodeSupport = supportsUnicode()
   
   // Elementos ASCII simples para baixa compatibilidade
   let elements = {
@@ -50,7 +71,7 @@ export function getVisualElements() {
   }
   
   // Elementos aprimorados para terminais com melhor suporte a símbolos
-  if (supportsUnicode) {
+  if (hasUnicodeSupport) {
     elements = {
       verticalLine: '│',
       horizontalLine: '─',
@@ -74,5 +95,6 @@ export function getVisualElements() {
 export default {
   isWindows,
   normalizePath,
+  supportsUnicode,
   getVisualElements
 }
